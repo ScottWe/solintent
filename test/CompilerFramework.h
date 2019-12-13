@@ -42,6 +42,14 @@ protected:
      */
 	solidity::SourceUnit const* parse(std::string const& _source);
 
+	/**
+	 * Queries a contract by name, if possible. If no contract is found, then
+	 * the nullptr is returned.
+	 *
+	 * _name: the contract to fetch
+	 */
+	solidity::ContractDefinition const* fetch(std::string const& _name);
+
 	virtual ~CompilerFramework() = default;
 
 private:
@@ -54,6 +62,8 @@ private:
     langutil::EVMVersion m_evmVersion;
     // An instance of the Solidity compiler.
 	mutable std::unique_ptr<dev::solidity::CompilerStack> m_compiler;
+	// The most recently generated AST.
+	mutable solidity::SourceUnit const* m_ast;
 };
 
 }

@@ -64,7 +64,22 @@ solidity::SourceUnit const* CompilerFramework::parse(string const& _source)
         BOOST_FAIL("Errors found: " + formatErrors());
     }
 
-	return (&m_compiler->ast(""));
+	m_ast = &m_compiler->ast("");
+	return m_ast;
+}
+
+solidity::ContractDefinition const* CompilerFramework::fetch(string const& _name)
+{
+	if (m_ast)
+	{
+		using namespace dev::solidity;
+		auto opts = ASTNode::filteredNodes<ContractDefinition>(m_ast->nodes());
+		for (auto const* opt : opts)
+		{
+			if (opt->name() == _name) return opt;
+		}
+	}
+	return nullptr;
 }
 
 // -------------------------------------------------------------------------- //
@@ -96,6 +111,7 @@ BOOST_AUTO_TEST_CASE(smoke_test)
 	)";
     auto const* AST = parse(sourceCode);
 	BOOST_CHECK(!AST->nodes().empty());
+	BOOST_CHECK_NE(fetch("test"), nullptr);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
