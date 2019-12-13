@@ -21,4 +21,5 @@ include_directories(solidity)
 add_subdirectory(solidity)
 
 # Project
+include_directories(.)
 add_subdirectory(solintent)

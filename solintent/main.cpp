@@ -23,7 +23,7 @@
  * The solintent command-line interface.
  */
 
-#include <solc/CommandLineInterface.h>
+#include <solintent/CommandLineInterface.h>
 #include <boost/exception/all.hpp>
 #include <clocale>
 #include <iostream>
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 {
 	setDefaultOrCLocale();
 
-	dev::solidity::CommandLineInterface cli;
+	dev::solintent::CommandLineInterface cli;
 	if (!cli.parseArguments(argc, argv)) return ERROR_RV;
 	if (!cli.processInput()) return ERROR_RV;
 

@@ -23,7 +23,7 @@
  * The solintent command-line interface.
  */
 
-#include <solc/CommandLineInterface.h>
+#include <solintent/CommandLineInterface.h>
 
 #include <libsolidity/interface/Version.h>
 #include <libsolidity/parsing/Parser.h>
@@ -69,8 +69,10 @@ namespace po = boost::program_options;
 
 namespace dev
 {
-namespace solidity
+namespace solintent
 {
+
+// -------------------------------------------------------------------------- //
 
 bool g_hasOutput = false;
 
@@ -89,6 +91,8 @@ std::ostream& serr(bool _used = true)
 
 #define cout
 #define cerr
+
+// -------------------------------------------------------------------------- //
 
 static string const g_strCliDesc = R"(solc, the Solidity commandline compiler.
 
@@ -135,6 +139,8 @@ static void version()
 	exit(0);
 }
 
+// -------------------------------------------------------------------------- //
+
 bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 {
 	bool ignoreMissing = m_args.count(g_argIgnoreMissingFiles);
@@ -146,7 +152,7 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 			auto eq = find(path.begin(), path.end(), '=');
 			if (eq != path.end())
 			{
-				if (auto r = CompilerStack::parseRemapping(path))
+				if (auto r = solidity::CompilerStack::parseRemapping(path))
 				{
 					m_remappings.emplace_back(std::move(*r));
 					path = string(eq + 1, path.end());
@@ -220,6 +226,8 @@ bool CommandLineInterface::readInputFilesAndConfigureRemappings()
 
 	return true;
 }
+
+// -------------------------------------------------------------------------- //
 
 bool CommandLineInterface::parseLibraryOption(string const& _input)
 {
@@ -308,6 +316,8 @@ bool CommandLineInterface::parseLibraryOption(string const& _input)
 	return true;
 }
 
+// -------------------------------------------------------------------------- //
+
 void CommandLineInterface::createFile(string const& _fileName, string const& _data)
 {
 	namespace fs = boost::filesystem;
@@ -393,8 +403,10 @@ bool CommandLineInterface::parseArguments(int _argc, char** _argv)
 	// parse the compiler arguments
 	try
 	{
+		auto const CLPSTYLE = (po::command_line_style::default_style)
+					        & (~po::command_line_style::allow_guessing);
 		po::command_line_parser cmdLineParser(_argc, _argv);
-		cmdLineParser.style(po::command_line_style::default_style & (~po::command_line_style::allow_guessing));
+		cmdLineParser.style(CLPSTYLE);
 		cmdLineParser.options(allOptions).positional(filesPositions);
 		po::store(cmdLineParser.run(), m_args);
 	}
@@ -431,15 +443,18 @@ bool CommandLineInterface::parseArguments(int _argc, char** _argv)
 	return true;
 }
 
+// -------------------------------------------------------------------------- //
+
 bool CommandLineInterface::processInput()
 {
-	ReadCallback::Callback fileReader = [this](
+	solidity::ReadCallback::Callback fileReader = [this](
 		string const& _kind, string const& _path
 	)
 	{
 		try
 		{
-			if (_kind != ReadCallback::kindString(ReadCallback::Kind::ReadFile))
+			auto const EXPKIND = solidity::ReadCallback::Kind::ReadFile;
+			if (_kind != solidity::ReadCallback::kindString(EXPKIND))
 			{
 				BOOST_THROW_EXCEPTION(InternalCompilerError() << errinfo_comment(
 					"ReadFile callback used as callback kind " +
@@ -468,31 +483,31 @@ bool CommandLineInterface::processInput()
 				}
 			}
 			if (!isAllowed)
-				return ReadCallback::Result{
+				return solidity::ReadCallback::Result{
 					false, "File outside of allowed directories."
 				};
 
 			if (!boost::filesystem::exists(canonicalPath))
-				return ReadCallback::Result{false, "File not found."};
+				return solidity::ReadCallback::Result{false, "File not found."};
 
 			if (!boost::filesystem::is_regular_file(canonicalPath))
-				return ReadCallback::Result{false, "Not a valid file."};
+				return solidity::ReadCallback::Result{false, "Not a valid file."};
 
 			auto contents = dev::readFileAsString(canonicalPath.string());
 			m_sourceCodes[path.generic_string()] = contents;
-			return ReadCallback::Result{true, contents};
+			return solidity::ReadCallback::Result{true, contents};
 		}
 		catch (Exception const& _exception)
 		{
 			string const CBMSG = "Exception in read callback: ";
-			return ReadCallback::Result{
+			return solidity::ReadCallback::Result{
 				false, CBMSG + boost::diagnostic_information(_exception)
 			};
 		}
 		catch (...)
 		{
 			string const CBMSG = "Unknown exception in read callback.";
-			return ReadCallback::Result{false, CBMSG};
+			return solidity::ReadCallback::Result{false, CBMSG};
 		}
 	};
 
@@ -506,7 +521,7 @@ bool CommandLineInterface::processInput()
 		}
 	}
 
-	m_compiler = make_unique<CompilerStack>(fileReader);
+	m_compiler = make_unique<solidity::CompilerStack>(fileReader);
 
 	auto formatter = make_unique<SourceReferenceFormatterHuman>(
 		serr(false), m_coloredOutput
@@ -528,9 +543,9 @@ bool CommandLineInterface::processInput()
 		m_compiler->setRevertStringBehaviour(m_revertStrings);
 		// TODO: Perhaps we should not compile unless requested
 
-		OptimiserSettings settings = m_args.count(g_argOptimize)
-			? OptimiserSettings::standard()
-			: OptimiserSettings::minimal();
+		solidity::OptimiserSettings settings = m_args.count(g_argOptimize)
+			? solidity::OptimiserSettings::standard()
+			: solidity::OptimiserSettings::minimal();
 
 		settings.expectedExecutionsPerDeployment
 			= m_args[g_argOptimizeRuns].as<unsigned>();
@@ -612,12 +627,16 @@ bool CommandLineInterface::processInput()
 	return true;
 }
 
+// -------------------------------------------------------------------------- //
+
 bool CommandLineInterface::actOnInput()
 {
 	// TODO: Handle actions.
 
 	return !m_error;
 }
+
+// -------------------------------------------------------------------------- //
 
 }
 }
