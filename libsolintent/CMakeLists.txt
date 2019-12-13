@@ -1,0 +1,7 @@
+set(sources
+    static/BoundChecker.cpp
+    static/BoundChecker.h
+)
+
+add_library(intent ${sources})
+target_link_libraries(intent PUBLIC solidity)

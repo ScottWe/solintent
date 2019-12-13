@@ -23,4 +23,5 @@ add_subdirectory(solidity)
 # Project
 include_directories(.)
 add_subdirectory(solintent)
+add_subdirectory(libsolintent)
 add_subdirectory(test)

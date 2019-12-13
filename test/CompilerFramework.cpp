@@ -109,6 +109,7 @@ BOOST_AUTO_TEST_CASE(smoke_test)
 			}
 		}
 	)";
+
     auto const* AST = parse(sourceCode);
 	BOOST_CHECK(!AST->nodes().empty());
 	BOOST_CHECK_NE(fetch("test"), nullptr);
