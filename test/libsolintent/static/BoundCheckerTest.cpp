@@ -7,6 +7,7 @@
 #include <libsolintent/static/BoundChecker.h>
 
 #include <test/CompilerFramework.h>
+#include <libsolintent/util/SourceLocation.h>
 #include <boost/test/unit_test.hpp>
 
 namespace dev
@@ -185,6 +186,124 @@ BOOST_AUTO_TEST_CASE(magic_id)
     {
         auto const& ID = dynamic_cast<solidity::Identifier const&>(*det);
         BOOST_CHECK_EQUAL(ID.name(), "now");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(len_member)
+{
+    char const* sourceCode = R"(
+        contract A {
+            int[] arr;
+            function f() public view {
+                arr.length;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK(!FUNC->body().statements().empty());
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[0].get()
+    );
+
+    BoundChecker c;
+    auto const RESULT = c.check(STMT.expression());
+
+    BOOST_CHECK(RESULT.influence.empty());
+    BOOST_CHECK(!RESULT.min.has_value());
+    BOOST_CHECK(!RESULT.max.has_value());
+
+    BOOST_CHECK_EQUAL(RESULT.determiner.size(), 1);
+
+    for (auto const* det : RESULT.determiner)
+    {
+        auto const& MEM = dynamic_cast<solidity::MemberAccess const&>(*det);
+        BOOST_CHECK_EQUAL(srcloc_to_str(MEM.location()), "arr.length");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(bal_member)
+{
+    char const* sourceCode = R"(
+        contract A {
+            address addr;
+            function f() public view {
+                addr.balance;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK(!FUNC->body().statements().empty());
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[0].get()
+    );
+
+    BoundChecker c;
+    auto const RESULT = c.check(STMT.expression());
+
+    BOOST_CHECK(RESULT.influence.empty());
+    BOOST_CHECK(!RESULT.min.has_value());
+    BOOST_CHECK(!RESULT.max.has_value());
+
+    BOOST_CHECK_EQUAL(RESULT.determiner.size(), 1);
+
+    for (auto const* det : RESULT.determiner)
+    {
+        auto const& MEM = dynamic_cast<solidity::MemberAccess const&>(*det);
+        BOOST_CHECK_EQUAL(srcloc_to_str(MEM.location()), "addr.balance");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(struct_member)
+{
+    char const* sourceCode = R"(
+        contract A {
+            struct B { int a; }
+            B b;
+            function f() public view {
+                b.a;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK(!FUNC->body().statements().empty());
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[0].get()
+    );
+
+    BoundChecker c;
+    auto const RESULT = c.check(STMT.expression());
+
+    BOOST_CHECK(RESULT.influence.empty());
+    BOOST_CHECK(!RESULT.min.has_value());
+    BOOST_CHECK(!RESULT.max.has_value());
+
+    BOOST_CHECK_EQUAL(RESULT.determiner.size(), 1);
+
+    for (auto const* det : RESULT.determiner)
+    {
+        auto const& MEM = dynamic_cast<solidity::MemberAccess const&>(*det);
+        BOOST_CHECK_EQUAL(srcloc_to_str(MEM.location()), "b.a");
     }
 }
 

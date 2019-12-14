@@ -12,6 +12,7 @@
 
 #include <libsolintent/static/BoundChecker.h>
 
+#include <libsolintent/util/SourceLocation.h>
 #include <stdexcept>
 
 using namespace std;
@@ -143,8 +144,55 @@ bool BoundChecker::visit(solidity::NewExpression const& _node)
 
 bool BoundChecker::visit(solidity::MemberAccess const& _node)
 {
-    (void) _node;
-    throw;
+    // In Solidity, the meaning of a member access is contextual wrt. the
+    // expression's base type.
+    const auto* TYPE = _node.expression().annotation().type;
+    switch (TYPE->category())
+    {
+    case solidity::Type::Category::Array:
+        // The length field is an array member with unique semantic properties.
+        // It is bounded only if the push-to-delete ration of an array is
+        // bounded.
+        if (_node.memberName() == "length")
+        {
+            m_cache.emplace(
+                piecewise_construct,
+                forward_as_tuple(_node.id()),
+                forward_as_tuple(&_node)
+            );
+            return false;
+        }
+        break;
+    case solidity::Type::Category::Address:
+        // The balance field is a user-defined value.
+        if (_node.memberName() == "balance")
+        {
+            m_cache.emplace(
+                piecewise_construct,
+                forward_as_tuple(_node.id()),
+                forward_as_tuple(&_node)
+            );
+            return false;
+        }
+        break;
+    case solidity::Type::Category::Struct:
+        // Struct values may be constants or variables.
+        if (auto const* stype = dynamic_cast<solidity::StructType const*>(TYPE))
+        {
+            m_cache.emplace(
+                piecewise_construct,
+                forward_as_tuple(_node.id()),
+                forward_as_tuple(&_node)
+            );
+            return false;
+        }
+        break;
+    default:
+        break;
+    }
+
+    const string loggableLoc = srcloc_to_str(_node.location());
+    throw runtime_error("Unexpected member access: " + loggableLoc);
 }
 
 bool BoundChecker::visit(solidity::IndexAccess const& _node)
@@ -174,9 +222,9 @@ bool BoundChecker::visit(solidity::Identifier const& _node)
 
     // Now is a global identiifer without magic type. Otherwise, it should be a
     // variable declaration.
-   if (_node.name() != "now")
-   {
-       auto const* DECL = dynamic_cast<solidity::VariableDeclaration const*>(
+    if (_node.name() != "now")
+    {
+        auto const* DECL = dynamic_cast<solidity::VariableDeclaration const*>(
            _node.annotation().referencedDeclaration
        );
 
