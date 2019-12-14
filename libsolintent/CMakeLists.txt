@@ -1,6 +1,7 @@
 set(sources
     static/BoundChecker.cpp
     static/BoundChecker.h
+    util/Generic.h
     util/SourceLocation.cpp
     util/SourceLocation.h
 )
