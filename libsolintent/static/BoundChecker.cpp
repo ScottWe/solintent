@@ -29,25 +29,32 @@ BoundChecker::Result::Result()
 {
 }
 
-BoundChecker::Result::Result(Result const& result)
-    : min(result.min)
-    , max(result.max)
-    , influence(result.influence)
-    , determiner(result.determiner)
+BoundChecker::Result::Result(Result const& _result)
+    : min(_result.min)
+    , max(_result.max)
+    , influence(_result.influence)
+    , determiner(_result.determiner)
 {
 }
 
-BoundChecker::Result::Result(Result const&& result)
-    : min(std::move(result.min))
-    , max(std::move(result.max))
-    , influence(std::move(result.influence))
-    , determiner(std::move(result.determiner))
+BoundChecker::Result::Result(Result const&& _result)
+    : min(std::move(_result.min))
+    , max(std::move(_result.max))
+    , influence(std::move(_result.influence))
+    , determiner(std::move(_result.determiner))
 {
 }
 
-BoundChecker::Result::Result(solidity::rational _exact)
-    : min(make_optional<solidity::rational>(_exact))
+BoundChecker::Result::Result(bigint _exact)
+    : min(make_optional<bigint>(_exact))
     , max(min)
+{
+}
+
+BoundChecker::Result::Result(solidity::Expression const* _expr)
+    : min(nullopt)
+    , max(nullopt)
+    , determiner({ _expr })
 {
 }
 
@@ -154,8 +161,51 @@ bool BoundChecker::visit(solidity::IndexRangeAccess const& _node)
 
 bool BoundChecker::visit(solidity::Identifier const& _node)
 {
-    (void) _node;
-    throw;
+   if (_node.annotation().type->category() == solidity::Type::Category::Magic)
+   {
+       // The value is magic, and is therefore set by the user or a miner.
+       m_cache.emplace(
+           piecewise_construct,
+           forward_as_tuple(_node.id()),
+           forward_as_tuple(&_node)
+       );
+       return false;
+   }
+
+    // Now is a global identiifer without magic type. Otherwise, it should be a
+    // variable declaration.
+   if (_node.name() != "now")
+   {
+       auto const* DECL = dynamic_cast<solidity::VariableDeclaration const*>(
+           _node.annotation().referencedDeclaration
+       );
+
+        // Sanity check that the literal is declared.
+        if (!DECL)
+        {
+           throw runtime_error("Literal neither magic nore a declaration ref.");
+        }
+
+        // If the literal is constant, just take its value.
+        if (DECL->isConstant())
+        {
+            auto const RESULT = check(*DECL->value());
+            m_cache.emplace(
+                piecewise_construct,
+                forward_as_tuple(_node.id()),
+                forward_as_tuple(RESULT)
+            );
+            return false;
+        }
+   }
+
+    // Nothing could be learned so treat it as an unknown.
+    m_cache.emplace(
+        piecewise_construct,
+        forward_as_tuple(_node.id()),
+        forward_as_tuple(&_node)
+    );
+    return false;
 }
 
 bool BoundChecker::visit(solidity::Literal const& _node)
@@ -170,8 +220,11 @@ bool BoundChecker::visit(solidity::Literal const& _node)
     }
 
     m_cache.emplace(
-        piecewise_construct, forward_as_tuple(_node.id()), forward_as_tuple(val)
+        piecewise_construct,
+        forward_as_tuple(_node.id()),
+        forward_as_tuple(val.numerator())
     );
+    return false;
 }
 
 // -------------------------------------------------------------------------- //

@@ -36,14 +36,15 @@ public:
     struct Result
     {
         Result();
-        Result(Result const& result);
-        Result(Result const&& result);
-        explicit Result(solidity::rational _exact);
+        Result(Result const& _result);
+        Result(Result const&& _result);
+        explicit Result(bigint _exact);
+        explicit Result(solidity::Expression const* _expr);
 
-        std::optional<solidity::rational> min;
-        std::optional<solidity::rational> max;
-        std::set<solidity::VariableDeclaration const*> influence;
-        std::set<solidity::VariableDeclaration const*> determiner;
+        std::optional<bigint> min;
+        std::optional<bigint> max;
+        std::set<solidity::Expression const*> influence;
+        std::set<solidity::Expression const*> determiner;
     };
 
     /**
