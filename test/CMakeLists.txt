@@ -2,6 +2,7 @@ set(sources
     CompilerFramework.cpp
     CompilerFramework.h
     libsolintent/static/BoundCheckerTest.cpp
+    libsolintent/util/SourceLocationTest.cpp
 )
 
 add_executable(testsuite ${sources} main.cpp)
