@@ -77,6 +77,20 @@ protected:
      */
     explicit ExpressionSummary(solidity::Expression const& _expr);
 
+    /**
+     * Extracts all Source tags from an identifier.
+     * 
+     * _id: the identifier
+     */
+    static std::set<Source> tag_identifier(solidity::Identifier const& _id);
+
+    /**
+     * Extracts all Source tags from a member access.
+     * 
+     * _access: the access
+     */
+    static std::set<Source> tag_member(solidity::MemberAccess const& _access);
+
 private:
     // The base expression encapsulated by this summary.
     std::reference_wrapper<solidity::Expression const> m_expr;
@@ -107,8 +121,6 @@ protected:
     explicit NumericSummary(solidity::Expression const& _expr);
 };
 
-// -------------------------------------------------------------------------- //
-
 /**
  * Represents a numeric constant.
  */
@@ -122,19 +134,17 @@ public:
      * _expr: the expression from which _num was derived.
      * _num: the rational representation of this constant.
      */
-    explicit NumericConstant(
-        solidity::Expression const& _expr, solidity::rational _num
-    );
+    NumericConstant(solidity::Expression const& _expr, solidity::rational _num);
+
+    ~NumericConstant() = default;
 
     std::optional<solidity::rational> exact() const override;
-
     std::optional<std::set<Source>> tags() const override;
 
 protected:
+    // In ths context, the exact value is not optional.
     solidity::rational const m_exact;
 };
-
-// -------------------------------------------------------------------------- //
 
 /**
  * Represents an identifier in Solidity. This may excapsulate a complex AST
@@ -157,27 +167,93 @@ public:
      */
     explicit NumericVariable(solidity::MemberAccess const& _access);
 
-    std::optional<solidity::rational> exact() const override;
+    ~NumericVariable() = default;
 
+    std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
 
 private:
     // All source tags applied to this variable.
     std::set<Source> const m_tags;
+};
+
+// -------------------------------------------------------------------------- //
+
+/**
+ * Represents a boolean expression in Solidity as either a literal, or an AST of
+ * operations.
+ */
+class BooleanSummary: public ExpressionSummary
+{
+public:
+    virtual ~BooleanSummary() = 0;
 
     /**
-     * Extracts all Source tags from an identifier.
+     * Produces the exact value of the expression, if possible.
+     */
+    virtual std::optional<bool> exact() const = 0;
+
+protected:
+    /**
+     * Declares that this summary wraps the given expression.
+     * 
+     * _expr: the wrapped expression.
+     */
+    explicit BooleanSummary(solidity::Expression const& _expr);
+};
+
+/**
+ * Represents a boolean constant.
+ */
+class BooleanConstant final: public BooleanSummary
+{
+public:
+    /**
+     * Creates a boolean constant.
+     * 
+     * _expr: the expression from which _num was derived.
+     * _num: the rational representation of this constant.
+     */
+    BooleanConstant(solidity::Expression const& _expr, bool _bool);
+
+    ~BooleanConstant() = default;
+
+    std::optional<bool> exact() const override;
+    std::optional<std::set<Source>> tags() const override;
+
+private:
+    // In ths context, the exact value is not optional.
+    bool const m_exact;
+};
+
+/**
+ * Represents a boolean variable.
+ */
+class BooleanVariable final: public BooleanSummary
+{
+public:
+    /**
+     * Converts an identifier into a boolean variable.
      * 
      * _id: the identifier
      */
-    static std::set<Source> analyze_identifier(solidity::Identifier const& _id);
+    explicit BooleanVariable(solidity::Identifier const& _id);
 
     /**
-     * Extracts all Source tags from a member access.
+     * Converts a member access into a boolean variable.
      * 
      * _access: the access
      */
-    static std::set<Source> analyze_member(solidity::MemberAccess const& _access);
+    explicit BooleanVariable(solidity::MemberAccess const& _access);
+
+    ~BooleanVariable() = default;
+
+    std::optional<bool> exact() const override;
+    std::optional<std::set<Source>> tags() const override;
+
+private:
+    // All source tags applied to this variable.
+    std::set<Source> const m_tags;
 };
 
 // -------------------------------------------------------------------------- //

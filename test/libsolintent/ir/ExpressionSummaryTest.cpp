@@ -19,6 +19,8 @@ namespace test
 
 BOOST_FIXTURE_TEST_SUITE(ExpressionSummarized, CompilerFramework);
 
+// -------------------------------------------------------------------------- //
+
 BOOST_AUTO_TEST_CASE(numeric_const)
 {
     char const* sourceCode = R"(
@@ -274,8 +276,130 @@ BOOST_AUTO_TEST_CASE(numeric_var_byoutput)
 
 BOOST_AUTO_TEST_CASE(numeric_var_sourceless)
 {
+    char const* sourceCode = R"(
+        contract A {
+            function f() public view {
+                int a;
+                a;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 2);
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[1].get()
+    );
+
+    auto const& EXPR = dynamic_cast<solidity::Identifier const&>(
+        STMT.expression()
+    );
+    BooleanVariable srcless(EXPR);
+
+    BOOST_CHECK_EQUAL(srcless.id(), EXPR.id());
+    BOOST_CHECK_EQUAL(srcless.expr().id(), EXPR.id());
+    BOOST_CHECK(!srcless.exact().has_value());
+    BOOST_CHECK(srcless.tags().has_value());
+    if (srcless.tags().has_value())
+    {
+       BOOST_CHECK(srcless.tags().value().empty());
+    }
+}
+
+// -------------------------------------------------------------------------- //
+
+BOOST_AUTO_TEST_CASE(bool_const)
+{
+    char const* sourceCode = R"(
+        contract A { function f() public view { true; } }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK(!FUNC->body().statements().empty());
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[0].get()
+    );
+
+    auto const& EXPR = STMT.expression();
+    const bool BVAL = true;
+    BooleanConstant nconst(EXPR, BVAL);
+
+    BOOST_CHECK_EQUAL(nconst.id(), EXPR.id());
+    BOOST_CHECK_EQUAL(nconst.expr().id(), EXPR.id());
+    BOOST_CHECK(!nconst.tags().has_value());
+    BOOST_CHECK(nconst.exact().has_value());
+    if (nconst.exact().has_value())
+    {
+        BOOST_CHECK_EQUAL(nconst.exact().value(), BVAL);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(bool_var_bystate)
+{
     // TODO: other sources.
 }
+
+BOOST_AUTO_TEST_CASE(bool_var_byinput)
+{
+    // TODO: other sources.
+}
+
+BOOST_AUTO_TEST_CASE(bool_var_byoutput)
+{
+    // TODO: other sources.
+}
+
+BOOST_AUTO_TEST_CASE(bool_var_sourceless)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function f() public view {
+                bool a;
+                a;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 2);
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[1].get()
+    );
+
+    auto const& EXPR = dynamic_cast<solidity::Identifier const&>(
+        STMT.expression()
+    );
+    BooleanVariable srcless(EXPR);
+
+    BOOST_CHECK_EQUAL(srcless.id(), EXPR.id());
+    BOOST_CHECK_EQUAL(srcless.expr().id(), EXPR.id());
+    BOOST_CHECK(!srcless.exact().has_value());
+    BOOST_CHECK(srcless.tags().has_value());
+    if (srcless.tags().has_value())
+    {
+       BOOST_CHECK(srcless.tags().value().empty());
+    }
+}
+
+// -------------------------------------------------------------------------- //
 
 BOOST_AUTO_TEST_SUITE_END();
 
