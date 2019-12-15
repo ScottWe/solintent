@@ -24,44 +24,9 @@ namespace solintent
 
 // -------------------------------------------------------------------------- //
 
-BoundChecker::Result::Result()
-    : min(nullopt)
-    , max(nullopt)
-{
-}
-
-BoundChecker::Result::Result(Result const& _result)
-    : min(_result.min)
-    , max(_result.max)
-    , influence(_result.influence)
-    , determiner(_result.determiner)
-{
-}
-
-BoundChecker::Result::Result(Result const&& _result)
-    : min(std::move(_result.min))
-    , max(std::move(_result.max))
-    , influence(std::move(_result.influence))
-    , determiner(std::move(_result.determiner))
-{
-}
-
-BoundChecker::Result::Result(bigint _exact)
-    : min(make_optional<bigint>(_exact))
-    , max(min)
-{
-}
-
-BoundChecker::Result::Result(solidity::Expression const* _expr)
-    : min(nullopt)
-    , max(nullopt)
-    , determiner({ _expr })
-{
-}
-
-// -------------------------------------------------------------------------- //
-
-BoundChecker::Result BoundChecker::check(solidity::Expression const& _expr)
+shared_ptr<NumericSummary const> BoundChecker::check(
+    solidity::Expression const& _expr
+)
 {
     // Ensures the type is ordinal.
     switch (_expr.annotation().type->category())
@@ -71,7 +36,7 @@ BoundChecker::Result BoundChecker::check(solidity::Expression const& _expr)
     case solidity::Type::Category::FixedPoint:
         break;
     default:
-        throw runtime_error("Bound check requires numeric expressions.");
+        throw runtime_error("BoundChecker requires numeric expressions.");
     }
 
     // Analyzes bounds.
@@ -144,55 +109,9 @@ bool BoundChecker::visit(solidity::NewExpression const& _node)
 
 bool BoundChecker::visit(solidity::MemberAccess const& _node)
 {
-    // In Solidity, the meaning of a member access is contextual wrt. the
-    // expression's base type.
-    const auto* TYPE = _node.expression().annotation().type;
-    switch (TYPE->category())
-    {
-    case solidity::Type::Category::Array:
-        // The length field is an array member with unique semantic properties.
-        // It is bounded only if the push-to-delete ration of an array is
-        // bounded.
-        if (_node.memberName() == "length")
-        {
-            m_cache.emplace(
-                piecewise_construct,
-                forward_as_tuple(_node.id()),
-                forward_as_tuple(&_node)
-            );
-            return false;
-        }
-        break;
-    case solidity::Type::Category::Address:
-        // The balance field is a user-defined value.
-        if (_node.memberName() == "balance")
-        {
-            m_cache.emplace(
-                piecewise_construct,
-                forward_as_tuple(_node.id()),
-                forward_as_tuple(&_node)
-            );
-            return false;
-        }
-        break;
-    case solidity::Type::Category::Struct:
-        // Struct values may be constants or variables.
-        if (auto const* stype = dynamic_cast<solidity::StructType const*>(TYPE))
-        {
-            m_cache.emplace(
-                piecewise_construct,
-                forward_as_tuple(_node.id()),
-                forward_as_tuple(&_node)
-            );
-            return false;
-        }
-        break;
-    default:
-        break;
-    }
-
-    const string loggableLoc = srcloc_to_str(_node.location());
-    throw runtime_error("Unexpected member access: " + loggableLoc);
+    auto summary = make_shared<NumericVariable>(_node);
+    m_cache[summary->id()] = move(summary);
+    return false;
 }
 
 bool BoundChecker::visit(solidity::IndexAccess const& _node)
@@ -209,50 +128,32 @@ bool BoundChecker::visit(solidity::IndexRangeAccess const& _node)
 
 bool BoundChecker::visit(solidity::Identifier const& _node)
 {
-   if (_node.annotation().type->category() == solidity::Type::Category::Magic)
-   {
-       // The value is magic, and is therefore set by the user or a miner.
-       m_cache.emplace(
-           piecewise_construct,
-           forward_as_tuple(_node.id()),
-           forward_as_tuple(&_node)
-       );
-       return false;
-   }
+    shared_ptr<NumericSummary const> summary;
 
-    // Now is a global identiifer without magic type. Otherwise, it should be a
-    // variable declaration.
-    if (_node.name() != "now")
+    // Checks if this expression has a constant value.
+    auto const* REF = _node.annotation().referencedDeclaration;
+    if (auto DECL = dynamic_cast<solidity::VariableDeclaration const*>(REF))
     {
-        auto const* DECL = dynamic_cast<solidity::VariableDeclaration const*>(
-           _node.annotation().referencedDeclaration
-       );
-
-        // Sanity check that the literal is declared.
-        if (!DECL)
-        {
-           throw runtime_error("Literal neither magic nore a declaration ref.");
-        }
-
-        // If the literal is constant, just take its value.
         if (DECL->isConstant())
         {
-            auto const RESULT = check(*DECL->value());
-            m_cache.emplace(
-                piecewise_construct,
-                forward_as_tuple(_node.id()),
-                forward_as_tuple(RESULT)
-            );
-            return false;
+            auto tmp = check(*DECL->value());
+            if (!tmp->exact().has_value())
+            {
+                string const SRC = srcloc_to_str(DECL->location());
+                throw runtime_error("Expected constant, found: " + SRC); 
+            }
+            summary = make_shared<NumericConstant>(_node, tmp->exact().value());
         }
    }
 
-    // Nothing could be learned so treat it as an unknown.
-    m_cache.emplace(
-        piecewise_construct,
-        forward_as_tuple(_node.id()),
-        forward_as_tuple(&_node)
-    );
+    // It is not reducible to a constant
+    if (!summary)
+    {
+        summary = make_shared<NumericVariable>(_node);
+    }
+
+    // Records entry.
+    m_cache[summary->id()] = move(summary);
     return false;
 }
 
@@ -267,11 +168,8 @@ bool BoundChecker::visit(solidity::Literal const& _node)
         throw runtime_error("Numeric literal is not convertible to rational.");
     }
 
-    m_cache.emplace(
-        piecewise_construct,
-        forward_as_tuple(_node.id()),
-        forward_as_tuple(val.numerator())
-    );
+    auto summary = make_shared<NumericConstant>(_node, val);
+    m_cache[summary->id()] = move(summary);
     return false;
 }
 
