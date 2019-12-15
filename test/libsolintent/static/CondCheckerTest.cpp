@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(literals)
     auto const& STMTS = FUNC->body().statements();
     for (size_t i = 0; i < STMTS.size(); ++i)
     {
-        auto const STMT = dynamic_cast<solidity::ExpressionStatement const*>(
+        auto const* STMT = dynamic_cast<solidity::ExpressionStatement const*>(
             STMTS[i].get()
         );
         BOOST_CHECK_NE(STMT, nullptr);
@@ -114,15 +114,11 @@ BOOST_AUTO_TEST_CASE(var_ids)
     auto const* FUNC = CONTRACT->definedFunctions()[0];
     BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 3);
 
-    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
-        *FUNC->body().statements()[0].get()
-    );
-
     CondChecker c;
     for (auto s : FUNC->body().statements())
     {
-        auto STMT = dynamic_cast<solidity::ExpressionStatement const*>(s.get());
-        auto res = c.check(STMT->expression());
+        auto stmt = dynamic_cast<solidity::ExpressionStatement const*>(s.get());
+        auto res = c.check(stmt->expression());
 
         BOOST_CHECK(!res->exact().has_value());
         BOOST_CHECK(res->tags().has_value());

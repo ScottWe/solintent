@@ -10,6 +10,8 @@
 #include <libsolintent/util/SourceLocation.h>
 #include <boost/test/unit_test.hpp>
 
+using namespace std;
+
 namespace dev
 {
 namespace solintent
@@ -226,21 +228,60 @@ BOOST_AUTO_TEST_CASE(var_ids)
     auto const* FUNC = CONTRACT->definedFunctions()[0];
     BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 3);
 
-    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
-        *FUNC->body().statements()[0].get()
-    );
-
     BoundChecker c;
     for (auto s : FUNC->body().statements())
     {
-        auto STMT = dynamic_cast<solidity::ExpressionStatement const*>(s.get());
-        auto res = c.check(STMT->expression());
+        auto stmt = dynamic_cast<solidity::ExpressionStatement const*>(s.get());
+        auto res = c.check(stmt->expression());
 
         BOOST_CHECK(!res->exact().has_value());
         BOOST_CHECK(res->tags().has_value());
         if (res->tags().has_value())
         {
             // TODO: proper sourcing
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(var_incr)
+{
+    char const* sourceCode = R"(
+        contract A {
+            int a;
+            function f() public {
+                --a;
+                ++a;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 2);
+
+    BoundChecker c;
+    for (size_t i = 0; i < 2; ++i)
+    {
+        auto const* EXPR = (FUNC->body().statements()[i]).get();
+        auto stmt = dynamic_cast<solidity::ExpressionStatement const*>(EXPR);
+        auto res = c.check(stmt->expression());
+
+        BOOST_CHECK(!res->exact().has_value());
+        BOOST_CHECK(res->tags().has_value());
+
+        auto trend = dynamic_pointer_cast<TrendingNumeric const>(res);
+        BOOST_CHECK(trend);
+        if (trend)
+        {
+            BOOST_CHECK(trend->trend().has_value());
+            if (trend->trend().has_value())
+            {
+                BOOST_CHECK_EQUAL(*trend->trend(), 2 * i - 1);
+            }
         }
     }
 }

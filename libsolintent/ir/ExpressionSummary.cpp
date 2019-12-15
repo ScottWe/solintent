@@ -167,6 +167,16 @@ NumericSummary::~NumericSummary() = default;
 
 // -------------------------------------------------------------------------- //
 
+TrendingNumeric::TrendingNumeric(solidity::Expression const& _expr)
+    : NumericSummary(_expr)
+{
+    // Note: the use for scalar trends seems unneeded now...
+}
+
+TrendingNumeric::~TrendingNumeric() = default;
+
+// -------------------------------------------------------------------------- //
+
 NumericConstant::NumericConstant(
     solidity::Expression const& _expr, solidity::rational _num
 )
@@ -202,7 +212,7 @@ NumericVariable::NumericVariable(
     set<ExpressionSummary::Source> _tags,
     int64_t _trend
 )
-    : NumericSummary(_expr)
+    : TrendingNumeric(_expr)
     , m_tags(move(_tags))
     , m_trend(_trend)
 {
@@ -223,12 +233,12 @@ optional<int64_t> NumericVariable::trend() const
     return make_optional<int64_t>(m_trend);
 }
 
-shared_ptr<NumericVariable const> NumericVariable::increment() const
+shared_ptr<TrendingNumeric const> NumericVariable::increment() const
 {
     return make_shared_internal(expr(), m_tags, m_trend + 1);
 }
 
-shared_ptr<NumericVariable const> NumericVariable::decrement() const
+shared_ptr<TrendingNumeric const> NumericVariable::decrement() const
 {
     return make_shared_internal(expr(), m_tags, m_trend - 1);
 }

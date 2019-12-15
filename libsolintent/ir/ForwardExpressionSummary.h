@@ -11,13 +11,19 @@ namespace dev
 namespace solintent
 {
 
-// Base class.
+// Base Class.
 class ExpressionSummary;
 
-// Numeric Expressions
+// Numeric Expressions.
 class NumericSummary;
+class TrendingNumeric;
 class NumericConstant;
 class NumericVariable;
+
+// Boolean Expressions.
+class BooleanSummary;
+class BooleanConstant;
+class BooleanVariable;
 
 }
 }

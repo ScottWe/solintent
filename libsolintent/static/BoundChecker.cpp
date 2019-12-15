@@ -79,8 +79,29 @@ bool BoundChecker::visit(solidity::TupleExpression const& _node)
 
 bool BoundChecker::visit(solidity::UnaryOperation const& _node)
 {
-    (void) _node;
-    throw;
+    string const TOKSTR = solidity::TokenTraits::friendlyName(_node.getOperator());
+
+    auto child = check(_node.subExpression());
+
+    // TODO: dynamic casts... no.
+    shared_ptr<NumericSummary const> result;
+    switch (_node.getOperator())
+    {
+    case solidity::Token::BitNot:
+        throw runtime_error("Binary negation is not captured by this model.");
+    case solidity::Token::Inc:
+        result = dynamic_pointer_cast<TrendingNumeric const>(child)->increment();
+        break;
+    case solidity::Token::Dec:
+        result = dynamic_pointer_cast<TrendingNumeric const>(child)->decrement();
+        break;
+    default:
+        throw runtime_error("Unexpected unary numeric operation: " + TOKSTR);
+    }
+
+    // TODO: inaccuracy in expression...
+    m_cache[_node.id()] = move(result);
+    return false;
 }
 
 bool BoundChecker::visit(solidity::BinaryOperation const& _node)

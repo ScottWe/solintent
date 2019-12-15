@@ -124,6 +124,42 @@ protected:
 };
 
 /**
+ * Specialization of numerics, with the ability to aggregate mutation trends.
+ */
+class TrendingNumeric: public NumericSummary
+{
+public:
+    virtual ~TrendingNumeric() = 0;
+
+    /**
+     * Simulates invocations of `++` (resp. `--`). By calling these operations,
+     * a new TrendingNumeric is produced, in which the trend has been updated.
+     */
+    virtual std::shared_ptr<TrendingNumeric const> increment() const = 0;
+    virtual std::shared_ptr<TrendingNumeric const> decrement() const = 0;
+
+    /**
+     * In the given expression, this trending lval may be wrapped by inplace
+     * mutation operators, such as `++`. This function captures a trend in the
+     * variable executing the given statement.
+     * 
+     * Note: the value is nullopt when the trend is indeterminant given local
+     * information.
+     */
+    virtual std::optional<int64_t> trend() const = 0;
+
+protected:
+    /**
+     * Declares that this summary wraps the given expression and allows for
+     * trending values.
+     * 
+     * _expr: the wrapped expression.
+     */
+    TrendingNumeric(solidity::Expression const& _expr);
+
+};
+
+/**
  * Represents a numeric constant.
  */
 class NumericConstant final: public NumericSummary
@@ -156,7 +192,7 @@ protected:
  * an expression `++(++(++(++a)))` is increasing, an expression `++(--(--a))` is
  * decreasing, and an expression `++(--(++(--a)))` is stable.
  */
-class NumericVariable final: public NumericSummary
+class NumericVariable final: public TrendingNumeric
 {
 public:
     /**
@@ -173,27 +209,15 @@ public:
      */
     explicit NumericVariable(solidity::MemberAccess const& _access);
 
-    /**
-     * Simulates invocations of `++` (resp. `--`). By calling these operations,
-     * a new NumericVariable is produced, in which the trend has been updated.
-     */
-    std::shared_ptr<NumericVariable const> increment() const;
-    std::shared_ptr<NumericVariable const> decrement() const;
-
-    /**
-     * In the given expression, this variable may be wrapped by inplace mutation
-     * operators, such as `++`. This function captures a trend in the variable
-     * executing the given statement.
-     * 
-     * Note: the value is nullopt when the trend is indeterminant given local
-     * information.
-     */
-    std::optional<int64_t> trend() const;
-
     ~NumericVariable() = default;
 
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+
+    std::shared_ptr<TrendingNumeric const> increment() const override;
+    std::shared_ptr<TrendingNumeric const> decrement() const override;
+
+    std::optional<int64_t> trend() const override;
 
 private:
     /**
