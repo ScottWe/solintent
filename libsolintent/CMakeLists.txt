@@ -4,6 +4,8 @@ set(sources
     ir/ForwardExpressionSummary.h
     static/BoundChecker.cpp
     static/BoundChecker.h
+    static/CondChecker.cpp
+    static/CondChecker.h
     util/Generic.h
     util/SourceLocation.cpp
     util/SourceLocation.h

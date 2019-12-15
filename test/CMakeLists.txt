@@ -3,6 +3,7 @@ set(sources
     CompilerFramework.h
     libsolintent/ir/ExpressionSummaryTest.cpp
     libsolintent/static/BoundCheckerTest.cpp
+    libsolintent/static/CondCheckerTest.cpp
     libsolintent/util/GenericTest.cpp
     libsolintent/util/SourceLocationTest.cpp
 )

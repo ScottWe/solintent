@@ -53,12 +53,6 @@ shared_ptr<NumericSummary const> BoundChecker::check(
 
 // -------------------------------------------------------------------------- //
 
-bool BoundChecker::visit(solidity::EnumValue const& _node)
-{
-    (void) _node;
-    throw;
-}
-
 bool BoundChecker::visit(solidity::ParameterList const& _node)
 {
     (void) _node;
@@ -96,12 +90,6 @@ bool BoundChecker::visit(solidity::BinaryOperation const& _node)
 }
 
 bool BoundChecker::visit(solidity::FunctionCall const& _node)
-{
-    (void) _node;
-    throw;
-}
-
-bool BoundChecker::visit(solidity::NewExpression const& _node)
 {
     (void) _node;
     throw;

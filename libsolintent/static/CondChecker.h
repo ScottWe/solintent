@@ -1,7 +1,8 @@
 /**
- * The analyzer performs a best-effort pass to place bounds on expressions. If
- * a bound is computed, it is guaranteed to restrict the variable. If a bound is
- * not computed, nothing can be said about the variable.
+ * The analyzer performs a best-effort pass to statically resolve all
+ * conditions. If a constant is computed, it is guaranteed to hold in all cases.
+ * If a constant is not computed, a pattern is given describing the behaviour of
+ * the condition.
  */
 
 /**
@@ -14,26 +15,24 @@
 
 #include <libsolidity/ast/ASTVisitor.h>
 #include <libsolintent/ir/ExpressionSummary.h>
-#include <cstdint>
 #include <map>
-#include <memory>
+#include <set>
 
 namespace dev
 {
 namespace solintent
 {
 
-class BoundChecker: public solidity::ASTConstVisitor
+class CondChecker: public solidity::ASTConstVisitor
 {
 public:
     /**
-     * Checks if _expr has an upper bound. If a bound is computed, it is
-     * returned. Information is also returned on variables which influence said
-     * upper bound, and values which the value depends on if it is not bounded.
+     * Attempts to interpret and reduce boolean expressions for the analysis of
+     * conditional behaviour (loops, branches, etc).
      * 
      * Results are cached for reuse.
      */
-    std::shared_ptr<NumericSummary const> check(
+    std::shared_ptr<BooleanSummary const> check(
         solidity::Expression const& _expr
     );
 
@@ -52,8 +51,8 @@ protected:
 	bool visit(solidity::Literal const& _node) override;
 
 private:
-    // A cache which is computed on-the-fly for bound estimations.
-    std::map<size_t, std::shared_ptr<NumericSummary const>> m_cache;
+    // A cache which is computed on-the-fly for boolean estimations.
+    std::map<size_t, std::shared_ptr<BooleanSummary const>> m_cache;
 };
 
 }
