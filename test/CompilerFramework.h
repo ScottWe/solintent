@@ -29,9 +29,6 @@ namespace solintent
 namespace test
 {
 
-/**
- * Provides test harnesses access to the Solidity compiler as a framework.
- */
 class CompilerFramework
 {
 protected:

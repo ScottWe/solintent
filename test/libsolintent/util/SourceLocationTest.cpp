@@ -1,7 +1,7 @@
 /**
  * @author Arthur Scott Wesley <aswesley@uwaterloo.ca>
  * @date 2019
- * Tests for libsolintent/static/BoundChecker.cpp.
+ * Tests for libsolintent/util/SourceLocation.cpp.
  */
 
 #include <libsolintent/util/SourceLocation.h>
