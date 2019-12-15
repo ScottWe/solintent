@@ -188,14 +188,23 @@ optional<set<ExpressionSummary::Source>> NumericConstant::tags() const
 // -------------------------------------------------------------------------- //
 
 NumericVariable::NumericVariable(solidity::Identifier const& _id)
-    : NumericSummary(_id)
-    , m_tags(tag_identifier(_id))
+    : NumericVariable(_id, tag_identifier(_id), 0)
 {
 }
 
 NumericVariable::NumericVariable(solidity::MemberAccess const& _access)
-    : NumericSummary(_access)
-    , m_tags(tag_member(_access))
+    : NumericVariable(_access, tag_member(_access), 0)
+{
+}
+
+NumericVariable::NumericVariable(
+    solidity::Expression const& _expr,
+    set<ExpressionSummary::Source> _tags,
+    int64_t _trend
+)
+    : NumericSummary(_expr)
+    , m_tags(move(_tags))
+    , m_trend(_trend)
 {
 }
 
@@ -207,6 +216,30 @@ optional<solidity::rational> NumericVariable::exact() const
 optional<set<ExpressionSummary::Source>> NumericVariable::tags() const
 {
     return make_optional<set<ExpressionSummary::Source>>(m_tags);
+}
+
+optional<int64_t> NumericVariable::trend() const
+{
+    return make_optional<int64_t>(m_trend);
+}
+
+shared_ptr<NumericVariable const> NumericVariable::increment() const
+{
+    return make_shared_internal(expr(), m_tags, m_trend + 1);
+}
+
+shared_ptr<NumericVariable const> NumericVariable::decrement() const
+{
+    return make_shared_internal(expr(), m_tags, m_trend - 1);
+}
+
+shared_ptr<NumericVariable> NumericVariable::make_shared_internal(
+    solidity::Expression const& _expr, set<Source> _tags, int64_t _trend
+)
+{
+    auto retval = new NumericVariable(_expr, move(_tags), _trend);
+    if (!retval) throw bad_alloc();
+    return shared_ptr<NumericVariable>(retval);
 }
 
 // -------------------------------------------------------------------------- //

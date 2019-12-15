@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(literals)
         BOOST_CHECK(res->exact().has_value());
         if (res->exact().has_value())
         {
-            BOOST_CHECK_EQUAL(res->exact().value(), i);
+            BOOST_CHECK_EQUAL(*res->exact(), i);
         }
     }
 }
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(const_id)
     BOOST_CHECK(res->exact().has_value());
     if (res->exact().has_value())
     {
-        BOOST_CHECK_EQUAL(res->exact().value(), 5);
+        BOOST_CHECK_EQUAL(*res->exact(), 5);
     }
 }
 
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(magic_id)
     BOOST_CHECK(res->tags().has_value());
     if (res->tags().has_value())
     {
-        auto tg = res->tags().value();
+        auto tg = (*res->tags());
         BOOST_CHECK(tg.find(ExpressionSummary::Source::Miner) != tg.end());
         BOOST_CHECK(tg.find(ExpressionSummary::Source::Input) != tg.end());
     }
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(len_member)
     BOOST_CHECK(res->tags().has_value());
     if (res->tags().has_value())
     {
-        auto tg = res->tags().value();
+        auto tg = (*res->tags());
         BOOST_CHECK(tg.find(ExpressionSummary::Source::Length) != tg.end());
     }
 }
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(bal_member)
     BOOST_CHECK(res->tags().has_value());
     if (res->tags().has_value())
     {
-        auto tg = res->tags().value();
+        auto tg = (*res->tags());
         BOOST_CHECK(tg.find(ExpressionSummary::Source::Balance) != tg.end());
     }
 }

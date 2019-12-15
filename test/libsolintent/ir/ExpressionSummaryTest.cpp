@@ -46,10 +46,11 @@ BOOST_AUTO_TEST_CASE(numeric_const)
     BOOST_CHECK_EQUAL(nconst.id(), EXPR.id());
     BOOST_CHECK_EQUAL(nconst.expr().id(), EXPR.id());
     BOOST_CHECK(!nconst.tags().has_value());
+
     BOOST_CHECK(nconst.exact().has_value());
     if (nconst.exact().has_value())
     {
-        BOOST_CHECK_EQUAL(nconst.exact().value(), RATIONAL);
+        BOOST_CHECK_EQUAL(*nconst.exact(), RATIONAL);
     }
 }
 
@@ -84,11 +85,12 @@ BOOST_AUTO_TEST_CASE(numeric_var_bylen)
     BOOST_CHECK_EQUAL(len.id(), EXPR.id());
     BOOST_CHECK_EQUAL(len.expr().id(), EXPR.id());
     BOOST_CHECK(!len.exact().has_value());
+
     BOOST_CHECK(len.tags().has_value());
     if (len.tags().has_value())
     {
         // TODO: should have state flag
-        auto tag = len.tags().value();
+        auto tag = (*len.tags());
         auto const END = tag.end();
         BOOST_CHECK_EQUAL(tag.size(), 1);
         BOOST_CHECK(tag.find(ExpressionSummary::Source::Length) != END);
@@ -126,15 +128,22 @@ BOOST_AUTO_TEST_CASE(numeric_var_bybalance)
     BOOST_CHECK_EQUAL(bal.expr().id(), EXPR.id());
     BOOST_CHECK(!bal.exact().has_value());
     BOOST_CHECK(bal.tags().has_value());
+
     if (bal.tags().has_value())
     {
         // TODO: should this have an input flag?
         //       sender could control max balance of contract
-        auto tag = bal.tags().value();
+        auto tag = (*bal.tags());
         auto const END = tag.end();
         BOOST_CHECK_EQUAL(tag.size(), 2);
         BOOST_CHECK(tag.find(ExpressionSummary::Source::Balance) != END);
         BOOST_CHECK(tag.find(ExpressionSummary::Source::State) != END);
+    }
+
+    BOOST_CHECK(bal.trend().has_value());
+    if (bal.trend().has_value())
+    {
+        BOOST_CHECK_EQUAL(*bal.trend(), 0);
     }
 }
 
@@ -165,13 +174,20 @@ BOOST_AUTO_TEST_CASE(numeric_var_now)
     BOOST_CHECK_EQUAL(now.expr().id(), EXPR.id());
     BOOST_CHECK(!now.exact().has_value());
     BOOST_CHECK(now.tags().has_value());
+
     if (now.tags().has_value())
     {
-        auto tag = now.tags().value();
+        auto tag = (*now.tags());
         auto const END = tag.end();
         BOOST_CHECK_EQUAL(tag.size(), 2);
         BOOST_CHECK(tag.find(ExpressionSummary::Source::Miner) != END);
         BOOST_CHECK(tag.find(ExpressionSummary::Source::Input) != END);
+    }
+
+    BOOST_CHECK(now.trend().has_value());
+    if (now.trend().has_value())
+    {
+        BOOST_CHECK_EQUAL(*now.trend(), 0);
     }
 }
 
@@ -215,10 +231,11 @@ BOOST_AUTO_TEST_CASE(numeric_var_bmagic)
         BOOST_CHECK_EQUAL(nvar.id(), ACCESS->id());
         BOOST_CHECK_EQUAL(nvar.expr().id(), ACCESS->id());
         BOOST_CHECK(!nvar.exact().has_value());
+
         BOOST_CHECK(nvar.tags().has_value());
         if (nvar.tags().has_value())
         {
-            auto tg = nvar.tags().value();
+            auto tg = (*nvar.tags());
             auto const END = tg.end();
             if (ACCESS->memberName() == "difficulty")
             {
@@ -255,6 +272,12 @@ BOOST_AUTO_TEST_CASE(numeric_var_bmagic)
                 BOOST_CHECK_EQUAL(tg.size(), 1);
                 BOOST_CHECK(tg.find(ExpressionSummary::Source::Input) != END);
             }
+        }
+
+        BOOST_CHECK(nvar.trend().has_value());
+        if (nvar.trend().has_value())
+        {
+            BOOST_CHECK_EQUAL(*nvar.trend(), 0);
         }
     }
 }
@@ -300,7 +323,7 @@ BOOST_AUTO_TEST_CASE(numeric_var_sourceless)
     auto const& EXPR = dynamic_cast<solidity::Identifier const&>(
         STMT.expression()
     );
-    BooleanVariable srcless(EXPR);
+    NumericVariable srcless(EXPR);
 
     BOOST_CHECK_EQUAL(srcless.id(), EXPR.id());
     BOOST_CHECK_EQUAL(srcless.expr().id(), EXPR.id());
@@ -308,7 +331,73 @@ BOOST_AUTO_TEST_CASE(numeric_var_sourceless)
     BOOST_CHECK(srcless.tags().has_value());
     if (srcless.tags().has_value())
     {
-       BOOST_CHECK(srcless.tags().value().empty());
+       BOOST_CHECK(srcless.tags()->empty());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(numeric_incr_decr)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function f() public view {
+                int a;
+                a;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 2);
+
+    auto const& STMT = dynamic_cast<solidity::ExpressionStatement const&>(
+        *FUNC->body().statements()[1].get()
+    );
+
+    auto const& EXPR = dynamic_cast<solidity::Identifier const&>(
+        STMT.expression()
+    );
+
+    NumericVariable original(EXPR);
+    auto derived1 = original.increment();
+    auto derived2 = derived1->decrement();
+    auto derived3 = derived2->decrement();
+    auto derived4 = derived3->increment();
+
+    auto original_chk = original.trend().has_value();
+    auto derived1_chk = derived1->trend().has_value();
+    auto derived2_chk = derived2->trend().has_value();
+    auto derived3_chk = derived3->trend().has_value();
+    auto derived4_chk = derived4->trend().has_value();
+
+    BOOST_CHECK(original_chk);
+    if (original_chk)
+    {
+        BOOST_CHECK_EQUAL(*original.trend(), 0);
+    }
+    BOOST_CHECK(derived1_chk);
+    if (derived1_chk)
+    {
+        BOOST_CHECK_EQUAL(*derived1->trend(), 1);
+    }
+    BOOST_CHECK(derived2_chk);
+    if (derived2_chk)
+    {
+        BOOST_CHECK_EQUAL(*derived2->trend(), 0);
+    }
+    BOOST_CHECK(derived3_chk);
+    if (derived3_chk)
+    {
+        BOOST_CHECK_EQUAL(*derived3->trend(), -1);
+    }
+    BOOST_CHECK(derived4_chk);
+    if (derived4_chk)
+    {
+        BOOST_CHECK_EQUAL(*derived4->trend(), 0);
     }
 }
 
@@ -342,7 +431,7 @@ BOOST_AUTO_TEST_CASE(bool_const)
     BOOST_CHECK(nconst.exact().has_value());
     if (nconst.exact().has_value())
     {
-        BOOST_CHECK_EQUAL(nconst.exact().value(), BVAL);
+        BOOST_CHECK_EQUAL(*nconst.exact(), BVAL);
     }
 }
 
@@ -395,7 +484,7 @@ BOOST_AUTO_TEST_CASE(bool_var_sourceless)
     BOOST_CHECK(srcless.tags().has_value());
     if (srcless.tags().has_value())
     {
-       BOOST_CHECK(srcless.tags().value().empty());
+       BOOST_CHECK(srcless.tags()->empty());
     }
 }
 

@@ -21,6 +21,8 @@
 #include <libsolidity/ast/Types.h>
 #include <functional>
 #include <optional>
+#include <set>
+#include <vector>
 
 namespace dev
 {
@@ -149,6 +151,10 @@ protected:
 /**
  * Represents an identifier in Solidity. This may excapsulate a complex AST
  * expression, rendering it into a single symbol, and its semantic meaning.
+ * 
+ * This also acts as a collector for inplace mutations to l-values. For instance
+ * an expression `++(++(++(++a)))` is increasing, an expression `++(--(--a))` is
+ * decreasing, and an expression `++(--(++(--a)))` is stable.
  */
 class NumericVariable final: public NumericSummary
 {
@@ -167,14 +173,44 @@ public:
      */
     explicit NumericVariable(solidity::MemberAccess const& _access);
 
+    /**
+     * Simulates invocations of `++` (resp. `--`). By calling these operations,
+     * a new NumericVariable is produced, in which the trend has been updated.
+     */
+    std::shared_ptr<NumericVariable const> increment() const;
+    std::shared_ptr<NumericVariable const> decrement() const;
+
+    /**
+     * In the given expression, this variable may be wrapped by inplace mutation
+     * operators, such as `++`. This function captures a trend in the variable
+     * executing the given statement.
+     * 
+     * Note: the value is nullopt when the trend is indeterminant given local
+     * information.
+     */
+    std::optional<int64_t> trend() const;
+
     ~NumericVariable() = default;
 
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
 
 private:
+    /**
+     * Internal constructor to set all fields.
+     */
+    NumericVariable(
+        solidity::Expression const& _expr, std::set<Source> _tags, int64_t _trend
+    );
+
+    static std::shared_ptr<NumericVariable> make_shared_internal(
+        solidity::Expression const& _expr, std::set<Source> _tags, int64_t _trend
+    );
+
     // All source tags applied to this variable.
     std::set<Source> const m_tags;
+    // An aggregate of all increments and decrements.
+    int64_t const m_trend;
 };
 
 // -------------------------------------------------------------------------- //

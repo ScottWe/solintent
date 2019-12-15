@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(literals)
         BOOST_CHECK(res->exact().has_value());
         if (res->exact().has_value())
         {
-            BOOST_CHECK_EQUAL(res->exact().value(), i == 0);
+            BOOST_CHECK_EQUAL(*res->exact(), i == 0);
         }
     }
 }
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(const_id)
     BOOST_CHECK(res->exact().has_value());
     if (res->exact().has_value())
     {
-        BOOST_CHECK_EQUAL(res->exact().value(), true);
+        BOOST_CHECK_EQUAL(*res->exact(), true);
     }
 }
 
