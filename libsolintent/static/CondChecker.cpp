@@ -12,6 +12,9 @@
 
 #include <libsolintent/static/CondChecker.h>
 
+#include <libsolintent/util/SourceLocation.h>
+#include <stdexcept>
+
 using namespace std;
 
 namespace dev
@@ -89,8 +92,10 @@ bool CondChecker::visit(solidity::FunctionCall const& _node)
 
 bool CondChecker::visit(solidity::MemberAccess const& _node)
 {
-    (void) _node;
-    throw;
+    // TODO: code duplication
+    auto summary = make_shared<BooleanVariable>(_node);
+    m_cache[summary->id()] = move(summary);
+    return false;
 }
 
 bool CondChecker::visit(solidity::IndexAccess const& _node)
@@ -107,8 +112,34 @@ bool CondChecker::visit(solidity::IndexRangeAccess const& _node)
 
 bool CondChecker::visit(solidity::Identifier const& _node)
 {
-    (void) _node;
-    throw;
+    // TODO: code duplication
+    shared_ptr<BooleanSummary const> summary;
+
+    // Checks if this expression has a constant value.
+    auto const* REF = _node.annotation().referencedDeclaration;
+    if (auto DECL = dynamic_cast<solidity::VariableDeclaration const*>(REF))
+    {
+        if (DECL->isConstant())
+        {
+            auto tmp = check(*DECL->value());
+            if (!tmp->exact().has_value())
+            {
+                string const SRC = srcloc_to_str(DECL->location());
+                throw runtime_error("Expected constant, found: " + SRC); 
+            }
+            summary = make_shared<BooleanConstant>(_node, *tmp->exact());
+        }
+   }
+
+    // It is not reducible to a constant
+    if (!summary)
+    {
+        summary = make_shared<BooleanVariable>(_node);
+    }
+
+    // Records entry.
+    m_cache[summary->id()] = move(summary);
+    return false;
 }
 
 bool CondChecker::visit(solidity::Literal const& _node)

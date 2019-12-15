@@ -94,7 +94,6 @@ BOOST_AUTO_TEST_CASE(const_id)
     {
         BOOST_CHECK_EQUAL(res->exact().value(), 5);
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(magic_id)
@@ -232,7 +231,6 @@ BOOST_AUTO_TEST_CASE(var_ids)
     );
 
     BoundChecker c;
-
     for (auto s : FUNC->body().statements())
     {
         auto STMT = dynamic_cast<solidity::ExpressionStatement const*>(s.get());

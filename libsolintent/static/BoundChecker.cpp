@@ -97,6 +97,7 @@ bool BoundChecker::visit(solidity::FunctionCall const& _node)
 
 bool BoundChecker::visit(solidity::MemberAccess const& _node)
 {
+    // TODO: code duplication
     auto summary = make_shared<NumericVariable>(_node);
     m_cache[summary->id()] = move(summary);
     return false;
@@ -116,6 +117,7 @@ bool BoundChecker::visit(solidity::IndexRangeAccess const& _node)
 
 bool BoundChecker::visit(solidity::Identifier const& _node)
 {
+    // TODO: code duplication
     shared_ptr<NumericSummary const> summary;
 
     // Checks if this expression has a constant value.
@@ -130,7 +132,7 @@ bool BoundChecker::visit(solidity::Identifier const& _node)
                 string const SRC = srcloc_to_str(DECL->location());
                 throw runtime_error("Expected constant, found: " + SRC); 
             }
-            summary = make_shared<NumericConstant>(_node, tmp->exact().value());
+            summary = make_shared<NumericConstant>(_node, *tmp->exact());
         }
    }
 
