@@ -24,6 +24,7 @@ class NumericVariable;
 class BooleanSummary;
 class BooleanConstant;
 class BooleanVariable;
+class Comparison;
 
 }
 }

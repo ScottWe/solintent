@@ -1,4 +1,6 @@
 set(sources
+    ir/ExpressionInterface.cpp
+    ir/ExpressionInterface.h
     ir/ExpressionSummary.cpp
     ir/ExpressionSummary.h
     ir/ForwardExpressionSummary.h
