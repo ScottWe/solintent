@@ -63,9 +63,18 @@ BOOST_AUTO_TEST_SUITE(VisitorTest);
 
 BOOST_AUTO_TEST_CASE(visit)
 {
+    solidity::VariableDeclaration decl(
+        solidity::ASTNode::SourceLocation{},
+        nullptr,
+        nullptr,
+        nullptr,
+        solidity::Visibility::Public
+    );
+
     solidity::Identifier id(
         solidity::ASTNode::SourceLocation{}, make_shared<string>("a")
     );
+    id.annotation().referencedDeclaration = (&decl);
 
     auto nc = make_shared<NumericConstant>(id, 1);
     NumericVariable nv(id);

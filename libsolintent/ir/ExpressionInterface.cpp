@@ -95,6 +95,86 @@ BooleanSummary::~BooleanSummary() = default;
 
 // -------------------------------------------------------------------------- //
 
+SymbolicVariable::PathAnalyzer::PathAnalyzer(solidity::Identifier const& _id)
+{
+    _id.accept(*this);
+}
+
+SymbolicVariable::PathAnalyzer::PathAnalyzer(solidity::MemberAccess const& _mem)
+{
+    _mem.accept(*this);
+}
+
+string SymbolicVariable::PathAnalyzer::symb() const
+{
+    return m_symb;
+}
+
+optional<ExpressionSummary::Source> SymbolicVariable::PathAnalyzer::source(
+    /* ... */
+) const
+{
+    return m_source;
+}
+
+bool SymbolicVariable::PathAnalyzer::visit(
+    solidity::VariableDeclaration const& _node
+)
+{
+    if (_node.isStateVariable())
+    {
+        prependToPath("State");
+        m_source.emplace(ExpressionSummary::Source::State);
+    }
+    else if (_node.isReturnParameter())
+    {
+        // TODO: this presumes all outputs are named, but is not enforced.
+        m_source.emplace(ExpressionSummary::Source::Output);
+    }
+    else if (_node.isCallableOrCatchParameter())
+    {
+        m_source.emplace(ExpressionSummary::Source::Input);
+    }
+    return false;
+}
+
+bool SymbolicVariable::PathAnalyzer::visit(solidity::FunctionCall const& _node)
+{
+    (void) _node;
+    throw runtime_error("Names of anonymous return values not yet supported.");
+}
+
+bool SymbolicVariable::PathAnalyzer::visit(solidity::MemberAccess const& _node)
+{
+    prependToPath(_node.memberName());
+    return true;
+}
+
+void SymbolicVariable::PathAnalyzer::endVisit(solidity::Identifier const& _node)
+{
+    prependToPath(_node.name());
+
+    auto _decl = _node.annotation().referencedDeclaration;
+    if (!_decl)
+    {
+        string const SRCLOC = srclocToStr(_node.location());
+        throw runtime_error("Expected referenced declaration on: " + SRCLOC);
+    }
+
+    _decl->accept(*this);
+}
+
+void SymbolicVariable::PathAnalyzer::prependToPath(std::string _str)
+{
+    if (!m_symb.empty())
+    {
+        _str += "#";
+    }
+    m_symb = _str + m_symb;
+}
+
+// -------------------------------------------------------------------------- //
+
 SymbolicVariable::~SymbolicVariable() = default;
 
 SymbolicVariable::SymbolicVariable(solidity::Identifier const& _id)
@@ -104,10 +184,11 @@ SymbolicVariable::SymbolicVariable(solidity::Identifier const& _id)
     if (_id.name() == "now")
     {
         m_tags = { Source::Miner, Source::Input };
+        m_symb = "block#timestamp";
     }
     else
     {
-        // TODO: analyze scope...
+        applyPathAnalysis(PathAnalyzer(_id));
     }
 }
 
@@ -125,68 +206,65 @@ SymbolicVariable::SymbolicVariable(solidity::MemberAccess const& _access)
         if (MEMBER == "coinbase")
         {
             m_tags = { Source::Miner, Source::Input };
+            m_symb = "block#coinbase";
         }
         else if (MEMBER == "difficulty")
         {
             m_tags = { Source::Miner, Source::Input };
+            m_symb = "block#difficulty";
         }
         else if (MEMBER == "gaslimit")
         {
             m_tags = { Source::Miner, Source::Input };
+            m_symb = "block#gaslimit";
         }
         else if (MEMBER == "number")
         {
             m_tags = { Source::Miner, Source::Input };
+            m_symb = "block#number";
         }
         else if (MEMBER == "timestamp")
         {
             m_tags = { Source::Miner, Source::Input };
+            m_symb = "block#timestamp";
         }
         else if (MEMBER == "data")
         {
             m_tags = { Source::Sender, Source::Input };
+            m_symb = "msg#data";
         }
         else if (MEMBER == "sender")
         {
             m_tags = { Source::Sender, Source::Input };
+            m_symb = "msg#sender";
         }
         else if (MEMBER == "sig")
         {
             m_tags = { Source::Sender, Source::Input };
+            m_symb = "msg#sig";
         }
         else if (MEMBER == "value")
         {
             m_tags = { Source::Sender, Source::Input };
+            m_symb = "msg#value";
         }
         else if (MEMBER == "gasprice")
         {
             m_tags = { Source::Input };
+            m_symb = "tx#gasprice";
         }
         else if (MEMBER == "origin")
         {
             m_tags = { Source::Sender, Source::Input };
+            m_symb = "tx#origin";
         }
         else
         {
-            throw runtime_error("Unexpected magic field: " + MEMBER);
-        }
-    }
-    else if (EXPRTYPE == solidity::Type::Category::Address)
-    {
-        // Special case for variable address members.
-        if (MEMBER == "balance")
-        {
-            m_tags = { Source::Balance, Source::State };
-        }
-        else
-        {
-            throw runtime_error("Unexpected address member: " + SRCLOC);
+            throw runtime_error("Unexpected magic field: " + SRCLOC);
         }
     }
     else
     {
-        // Checks for state, input or output variables (possibly arrays).
-        // TODO: analyze scope...
         if (EXPRTYPE == solidity::Type::Category::Array)
         {
             if (MEMBER == "length")
@@ -209,7 +287,25 @@ SymbolicVariable::SymbolicVariable(solidity::MemberAccess const& _access)
                 throw runtime_error("Unexpected function member: " + SRCLOC);
             }
         }
+        else if (EXPRTYPE == solidity::Type::Category::Address)
+        {
+            // Special case for variable address members.
+            if (MEMBER == "balance")
+            {
+                m_tags = { Source::Balance, Source::State };
+            }
+            else
+            {
+                throw runtime_error("Unexpected address member: " + SRCLOC);
+            }
+        }
+        applyPathAnalysis(PathAnalyzer(_access));
     }
+}
+
+string SymbolicVariable::symb() const
+{
+    return m_symb;
 }
 
 set<ExpressionSummary::Source> SymbolicVariable::symbolTags() const
@@ -221,6 +317,15 @@ SymbolicVariable::SymbolicVariable(SymbolicVariable const& _otr)
     : m_tags(_otr.m_tags)
     , m_symb(_otr.m_symb)
 {
+}
+
+void SymbolicVariable::applyPathAnalysis(PathAnalyzer const& _analysis)
+{
+    if (_analysis.source().has_value())
+    {
+        m_tags.insert(*_analysis.source());
+    }
+    m_symb = _analysis.symb();
 }
 
 // -------------------------------------------------------------------------- //

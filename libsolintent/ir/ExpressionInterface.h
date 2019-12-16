@@ -15,10 +15,11 @@
 
 #pragma once
 
-#include <libsolidity/ast/ASTForward.h>
+#include <libsolidity/ast/ASTVisitor.h>
 #include <libsolidity/ast/Types.h>
 #include <libsolintent/ir/IRVisitor.h>
 #include <algorithm>
+#include <list>
 #include <optional>
 #include <set>
 
@@ -171,6 +172,11 @@ class SymbolicVariable
 public:
     virtual ~SymbolicVariable() = 0;
 
+    /**
+     * Allows the symbol to be tied to a unique name.
+     */
+    std::string symb() const;
+
 protected:
     /**
      * Resolves the identifier to its variable declaration. All labels and names
@@ -178,7 +184,7 @@ protected:
      * 
      * _id: the identifier to resolve
      */
-    SymbolicVariable(solidity::Identifier const& _id);
+    explicit SymbolicVariable(solidity::Identifier const& _id);
 
     /**
      * Resolves the member access to the appropriate initialization site. The
@@ -186,14 +192,14 @@ protected:
      * 
      * _access: the member access to resolve
      */
-    SymbolicVariable(solidity::MemberAccess const& _access);
+    explicit SymbolicVariable(solidity::MemberAccess const& _access);
 
     /**
      * Allows symbolic metadata to be forwarded to a new instantiation.
      * 
      * _otr: the previously annotated symbolic variable.
      */
-    SymbolicVariable(SymbolicVariable const& _otr);
+    explicit SymbolicVariable(SymbolicVariable const& _otr);
 
     /**
      * Returns all tags resolved during itialization.
@@ -201,10 +207,66 @@ protected:
     std::set<ExpressionSummary::Source> symbolTags() const;
 
 private:
+    /**
+     * Utility class to map scopable variables to path.
+     */
+    class PathAnalyzer: private solidity::ASTConstVisitor
+    {
+    public:
+        /**
+         * _id: identifier to analyze, wrt its reference declaration.
+         */
+        explicit PathAnalyzer(solidity::Identifier const& _id);
+    
+        /**
+         * _mem: identifier to analyze, wrt its reference declaration.
+         */
+        explicit PathAnalyzer(solidity::MemberAccess const& _mem);
+
+        /**
+         * Produces the full name of this variable
+         */
+        std::string symb() const;
+
+        /**
+         * Returns the source of this variable. If there are no applicable
+         * source annotations then notion is returned.
+         */
+        std::optional<ExpressionSummary::Source> source() const;
+    
+    protected:
+    	bool visit(solidity::VariableDeclaration const& _node) override;
+        bool visit(solidity::FunctionCall const& _node) override;
+        bool visit(solidity::MemberAccess const& _node) override;
+
+        void endVisit(solidity::Identifier const& _node) override;
+
+    private:
+        // Maintains a chain of all declarations, starting from top level.
+        std::string m_symb;
+        // If a variable source is resolved, it  is stored here.
+        std::optional<ExpressionSummary::Source> m_source;
+
+        /**
+         * Pushes _str to the front of m_path. The '#' separator notation is
+         * obeyed.
+         */
+        void prependToPath(std::string _str);
+    };
+
     // Stores all tags extracted for this symbol during analysis.
     std::set<ExpressionSummary::Source> m_tags;
     // A unique identifier for this variable.
     std::string m_symb;
+
+    /**
+     * Integrates the PathAnalysis results with the SymbolicVariable. This
+     * factors out some of the initialization logic.
+     * 
+     * TODO: the initialization parameter object pattern (does this have a
+     *       name?) would be more practical. Less error-prone...
+     */
+    void applyPathAnalysis(PathAnalyzer const& _analysis);
 };
 
 // -------------------------------------------------------------------------- //
