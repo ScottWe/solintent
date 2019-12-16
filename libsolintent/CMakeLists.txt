@@ -14,6 +14,8 @@ set(sources
     static/BoundChecker.h
     static/CondChecker.cpp
     static/CondChecker.h
+    static/ImplicitObligation.cpp
+    static/ImplicitObligation.h
     util/Generic.h
     util/SourceLocation.cpp
     util/SourceLocation.h

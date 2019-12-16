@@ -6,6 +6,7 @@ set(sources
     libsolintent/static/AnalysisEngineTest.cpp
     libsolintent/static/BoundCheckerTest.cpp
     libsolintent/static/CondCheckerTest.cpp
+    libsolintent/static/ObligationTests.cpp
     libsolintent/util/GenericTest.cpp
     libsolintent/util/SourceLocationTest.cpp
 )
