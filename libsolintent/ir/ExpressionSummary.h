@@ -85,6 +85,8 @@ public:
 
     ~NumericConstant() = default;
 
+    void acceptIR(IRVisitor & _visitor) const override;
+
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
     std::set<std::reference_wrapper<ExpressionSummary const>> free(
@@ -122,6 +124,8 @@ public:
     explicit NumericVariable(solidity::MemberAccess const& _access);
 
     ~NumericVariable() = default;
+
+    void acceptIR(IRVisitor & _visitor) const override;
 
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
@@ -190,6 +194,8 @@ public:
 
     ~BooleanConstant() = default;
 
+    void acceptIR(IRVisitor & _visitor) const override;
+
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
     std::set<std::reference_wrapper<ExpressionSummary const>> free(
@@ -222,6 +228,8 @@ public:
     explicit BooleanVariable(solidity::MemberAccess const& _access);
 
     ~BooleanVariable() = default;
+
+    void acceptIR(IRVisitor & _visitor) const override;
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
@@ -266,6 +274,8 @@ public:
      * Accessor to the right-hand side.
      */
     SummaryPointer<NumericSummary> rhs() const;
+
+    void acceptIR(IRVisitor & _visitor) const override;
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;

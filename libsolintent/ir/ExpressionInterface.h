@@ -17,6 +17,7 @@
 
 #include <libsolidity/ast/ASTForward.h>
 #include <libsolidity/ast/Types.h>
+#include <libsolintent/ir/IRVisitor.h>
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -44,7 +45,7 @@ using SummaryKey = size_t;
 /**
  * A generalized summary of any expression. This is a shared base-type.
  */
-class ExpressionSummary
+class ExpressionSummary: public IRDestination
 {
 public:
     /**
