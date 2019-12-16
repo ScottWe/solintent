@@ -20,7 +20,7 @@ namespace solintent
  * 
  * _loc: the location to analyze.
  */
-std::string srcloc_to_str(langutil::SourceLocation const& _loc);
+std::string srclocToStr(langutil::SourceLocation const& _loc);
 
 }
 }

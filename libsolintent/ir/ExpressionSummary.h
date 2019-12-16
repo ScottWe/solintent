@@ -14,6 +14,7 @@
 
 #include <libsolintent/ir/ExpressionInterface.h>
 #include <functional>
+#include <list>
 #include <vector>
 
 namespace dev
@@ -154,7 +155,7 @@ private:
      * _tags: see constructor
      * _trend: see constructor
      */
-    static SummaryPointer<NumericVariable> make_shared_internal(
+    static SummaryPointer<NumericVariable> makeSharedInternal(
         solidity::Expression const& _expr,
         std::set<Source> _tags,
         int64_t _trend
@@ -222,6 +223,11 @@ private:
     std::set<Source> const m_tags;
 };
 
+/**
+ * Encapsulates a comparison of two numeric values (ie `x <= y`). If possible,
+ * the value will be resolved statically. Otherwise, information will be
+ * extracted about the proof-obligations of this expression.
+ */
 class Comparison final: public BooleanSummary
 {
 public:
@@ -234,6 +240,7 @@ public:
      * Creates a comparison between two numeric expressions.
      */
     Comparison(
+        solidity::Expression const& _expr,
         Condition _cond,
         SummaryPointer<NumericSummary> _lhs,
         SummaryPointer<NumericSummary> _rhs
@@ -243,7 +250,7 @@ public:
      * Returns a list of the free variables upon which this comparison is
      * dependant.
      */
-    SummaryPointer<NumericSummary> free();
+    std::list<SummaryPointer<NumericSummary>> free();
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
@@ -252,9 +259,9 @@ private:
     // Abstraction of the comparison between the lhs and rhs.
     Condition const m_cond;
     // The left-hand side expression, which may or may not be constant.
-    SummaryPointer<NumericSummary> const _lhs;
+    SummaryPointer<NumericSummary> const m_lhs;
     // The right-hand side expression, which may or may not be constant.
-    SummaryPointer<NumericSummary> const _rhs;
+    SummaryPointer<NumericSummary> const m_rhs;
 };
 
 // -------------------------------------------------------------------------- //

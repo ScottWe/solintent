@@ -53,12 +53,12 @@ optional<set<ExpressionSummary::Source>> NumericConstant::tags() const
 // -------------------------------------------------------------------------- //
 
 NumericVariable::NumericVariable(solidity::Identifier const& _id)
-    : NumericVariable(_id, tag_identifier(_id), 0)
+    : NumericVariable(_id, tagIdentifier(_id), 0)
 {
 }
 
 NumericVariable::NumericVariable(solidity::MemberAccess const& _access)
-    : NumericVariable(_access, tag_member(_access), 0)
+    : NumericVariable(_access, tagMember(_access), 0)
 {
 }
 
@@ -92,15 +92,15 @@ SummaryPointer<TrendingNumeric> NumericVariable::increment(
     solidity::Expression const& _expr
 ) const
 {
-    return make_shared_internal(_expr, m_tags, m_trend + 1);
+    return makeSharedInternal(_expr, m_tags, m_trend + 1);
 }
 
 SummaryPointer<TrendingNumeric> NumericVariable::decrement(solidity::Expression const& _expr) const
 {
-    return make_shared_internal(_expr, m_tags, m_trend - 1);
+    return makeSharedInternal(_expr, m_tags, m_trend - 1);
 }
 
-SummaryPointer<NumericVariable> NumericVariable::make_shared_internal(
+SummaryPointer<NumericVariable> NumericVariable::makeSharedInternal(
     solidity::Expression const& _expr, set<Source> _tags, int64_t _trend
 )
 {
@@ -131,13 +131,13 @@ optional<set<ExpressionSummary::Source>> BooleanConstant::tags() const
 
 BooleanVariable::BooleanVariable(solidity::Identifier const& _id)
     : BooleanSummary(_id)
-    , m_tags(tag_identifier(_id))
+    , m_tags(tagIdentifier(_id))
 {
 }
 
 BooleanVariable::BooleanVariable(solidity::MemberAccess const& _access)
     : BooleanSummary(_access)
-    , m_tags(tag_member(_access))
+    , m_tags(tagMember(_access))
 {
 }
 
@@ -149,6 +149,53 @@ optional<bool> BooleanVariable::exact() const
 optional<set<ExpressionSummary::Source>> BooleanVariable::tags() const
 {
     return m_tags;
+}
+
+// -------------------------------------------------------------------------- //
+
+Comparison::Comparison(
+    solidity::Expression const& _expr,
+    Comparison::Condition _cond,
+    SummaryPointer<NumericSummary> _lhs,
+    SummaryPointer<NumericSummary> _rhs
+)
+    : BooleanSummary(_expr)
+    , m_cond(_cond)
+    , m_lhs(move(_lhs))
+    , m_rhs(move(_rhs))
+{
+}
+
+list<SummaryPointer<NumericSummary>> Comparison::free()
+{
+    // TODO: it is not yet possible to compute free variables. This will come.
+    return {};
+}
+
+optional<bool> Comparison::exact() const
+{
+    // TODO: if desired, some cases can be heuristically resolved.
+    // TODO: Z3 could help here... :)
+    return nullopt;
+}
+ 
+optional<set<ExpressionSummary::Source>> Comparison::tags() const
+{
+    auto opt_tags = make_optional<set<Source>>();
+    
+    auto const LHS_TAGS = m_lhs->tags();
+    if (LHS_TAGS.has_value())
+    {
+        opt_tags->insert(LHS_TAGS->begin(), LHS_TAGS->end());
+    }
+
+    auto const RHS_TAGS = m_rhs->tags();
+    if (RHS_TAGS.has_value())
+    {
+        opt_tags->insert(RHS_TAGS->begin(), RHS_TAGS->end());
+    }
+
+    return move(opt_tags);
 }
 
 // -------------------------------------------------------------------------- //

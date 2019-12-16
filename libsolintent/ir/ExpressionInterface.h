@@ -91,14 +91,14 @@ protected:
      * 
      * _id: the identifier
      */
-    static std::set<Source> tag_identifier(solidity::Identifier const& _id);
+    static std::set<Source> tagIdentifier(solidity::Identifier const& _id);
 
     /**
      * Extracts all Source tags from a member access.
      * 
      * _access: the access
      */
-    static std::set<Source> tag_member(solidity::MemberAccess const& _access);
+    static std::set<Source> tagMember(solidity::MemberAccess const& _access);
 
 private:
     // The base expression encapsulated by this summary.

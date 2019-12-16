@@ -15,7 +15,7 @@ namespace solintent
 
 // -------------------------------------------------------------------------- //
 
-string srcloc_to_str(langutil::SourceLocation const& _loc)
+string srclocToStr(langutil::SourceLocation const& _loc)
 {
 	string const& SRC = _loc.source->source();
 	string const RAW_RUN = SRC.substr(_loc.start, _loc.end - _loc.start);

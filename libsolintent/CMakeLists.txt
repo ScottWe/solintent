@@ -5,6 +5,7 @@ set(sources
     ir/ExpressionSummary.h
     ir/ForwardExpressionSummary.h
     static/AbstractAnalyzer.h
+    static/AbstractAnalyzer.cpp
     static/BoundChecker.cpp
     static/BoundChecker.h
     static/CondChecker.cpp

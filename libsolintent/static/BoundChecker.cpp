@@ -126,7 +126,7 @@ bool BoundChecker::visit(solidity::Identifier const& _node)
             auto tmp = check(*DECL->value());
             if (!tmp->exact().has_value())
             {
-                string const SRC = srcloc_to_str(DECL->location());
+                string const SRC = srclocToStr(DECL->location());
                 throw runtime_error("Expected constant, found: " + SRC); 
             }
             summary = make_shared<NumericConstant>(_node, *tmp->exact());

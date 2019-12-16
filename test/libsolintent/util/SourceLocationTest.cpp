@@ -41,9 +41,9 @@ BOOST_AUTO_TEST_CASE(convert_to_str)
     string const EXP_2 = "function f() public view " + EXP_1;
     string const EXP_3 = "contract A { " + EXP_2 + " }";
 
-    string const ACT_1 = srcloc_to_str(FUNCBODY.location());
-    string const ACT_2 = srcloc_to_str(FUNCTION.location());
-    string const ACT_3 = srcloc_to_str(CONTRACT.location());
+    string const ACT_1 = srclocToStr(FUNCBODY.location());
+    string const ACT_2 = srclocToStr(FUNCTION.location());
+    string const ACT_3 = srclocToStr(CONTRACT.location());
 
     BOOST_CHECK_EQUAL(ACT_1, EXP_1);
     BOOST_CHECK_EQUAL(ACT_2, EXP_2);

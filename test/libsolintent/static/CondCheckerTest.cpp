@@ -7,7 +7,11 @@
 #include <libsolintent/static/CondChecker.h>
 
 #include <test/CompilerFramework.h>
+#include <libsolintent/static/BoundChecker.h>
 #include <boost/test/unit_test.hpp>
+#include <memory>
+
+using namespace std;
 
 namespace dev
 {
@@ -126,6 +130,54 @@ BOOST_AUTO_TEST_CASE(var_ids)
         {
             // TODO: proper sourcing
         }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(const_compare)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function f() public pure {
+                5 < 4;
+                4 < 5;
+                5 <= 4;
+                4 <= 5;
+                4 > 5;
+                5 > 4;
+                4 >= 5;
+                5 >= 4;
+                4 == 3;
+                4 == 4;
+                4 != 4;
+                4 != 3;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 12);
+
+    auto b = make_shared<BoundChecker>();
+    CondChecker c;
+    c.setNumericAnalyzer(b);
+
+    for (size_t i = 0; i < 12; ++i)
+    {
+        auto const* EXPR = (FUNC->body().statements()[i]).get();
+        auto stmt = dynamic_cast<solidity::ExpressionStatement const*>(EXPR);
+        auto res = c.check(stmt->expression());
+
+        BOOST_CHECK(res->exact().has_value());
+        if (res->tags().has_value())
+        {
+            BOOST_CHECK_EQUAL(*res->exact(), (i % 2) != 0);
+        }
+        // TODO: check lists once that is functional
     }
 }
 

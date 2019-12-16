@@ -58,28 +58,81 @@ bool CondChecker::visit(solidity::UnaryOperation const& _node)
 
 bool CondChecker::visit(solidity::BinaryOperation const& _node)
 {
+    auto const OP = _node.getOperator();
     string const TOKSTR = solidity::TokenTraits::friendlyName(
         _node.getOperator()
     );
 
-    auto LHS = check(_node.leftExpression());
-    auto RHS = check(_node.rightExpression());
-
-    switch (_node.getOperator())
+    // Determines if this is a connective operator, or a numeric comparison.
+    if (solidity::TokenTraits::isCompareOp(OP))
     {
-    case solidity::Token::Equal:
-    case solidity::Token::NotEqual:
-    case solidity::Token::LessThan:
-    case solidity::Token::GreaterThan:
-    case solidity::Token::LessThanOrEqual:
-    case solidity::Token::GreaterThanOrEqual:
-        throw runtime_error("Comparison operators not yet supported.");
-    case solidity::Token::Or:
-    case solidity::Token::And:
+        // Analyzes the compared expressions for numeric data.
+        auto lhs = getNumericAnalyzer().check(_node.leftExpression());
+        auto rhs = getNumericAnalyzer().check(_node.rightExpression());
+
+        // Determines if the result may be resolved in-place.
+        if (lhs->exact().has_value() && rhs->exact().has_value())
+        {
+            // Computes the operation.
+            bool res;
+            switch (OP)
+            {
+            case solidity::Token::Equal:
+                res = (*lhs->exact()) == (*rhs->exact());
+                break;
+            case solidity::Token::NotEqual:
+                res = (*lhs->exact()) != (*rhs->exact());
+                break;
+            case solidity::Token::LessThan:
+                res = (*lhs->exact()) < (*rhs->exact());
+                break;
+            case solidity::Token::LessThanOrEqual:
+                res = (*lhs->exact()) <= (*rhs->exact());
+                break;
+            case solidity::Token::GreaterThan:
+                res = (*lhs->exact()) > (*rhs->exact());
+                break;
+            case solidity::Token::GreaterThanOrEqual:
+                res = (*lhs->exact()) >= (*rhs->exact());
+                break;
+            }
+            write_to_cache(make_shared<BooleanConstant>(_node, res));
+        }
+        else
+        {
+            // Classifies the operation.
+            Comparison::Condition cond;
+            switch (OP)
+            {
+            case solidity::Token::Equal:
+                cond = Comparison::Condition::Equal;
+                break;
+            case solidity::Token::NotEqual:
+                cond = Comparison::Condition::Distinct;
+                break;
+            case solidity::Token::LessThan:
+            case solidity::Token::LessThanOrEqual:
+                cond = Comparison::Condition::LessThan;
+                break;
+            case solidity::Token::GreaterThan:
+            case solidity::Token::GreaterThanOrEqual:
+                cond = Comparison::Condition::GreaterThan;
+                break;
+            }
+            write_to_cache(make_shared<Comparison>(_node, cond, lhs, rhs));
+        }
+    }
+    else if (solidity::TokenTraits::isBooleanOp(OP))
+    {
         throw runtime_error("Connective operators not yet supported.");
-    default:
+    }
+    else
+    {
+        string const TOKSTR = solidity::TokenTraits::friendlyName(OP);
         throw runtime_error("Unexpected boolean operator:" + TOKSTR);
     }
+
+    return false;
 }
 
 bool CondChecker::visit(solidity::FunctionCall const& _node)
@@ -121,7 +174,7 @@ bool CondChecker::visit(solidity::Identifier const& _node)
             auto tmp = check(*DECL->value());
             if (!tmp->exact().has_value())
             {
-                string const SRC = srcloc_to_str(DECL->location());
+                string const SRC = srclocToStr(DECL->location());
                 throw runtime_error("Expected constant, found: " + SRC); 
             }
             summary = make_shared<BooleanConstant>(_node, *tmp->exact());

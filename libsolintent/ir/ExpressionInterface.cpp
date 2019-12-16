@@ -45,7 +45,7 @@ size_t ExpressionSummary::id() const
     return m_expr.get().id();
 }
 
-set<ExpressionSummary::Source> ExpressionSummary::tag_identifier(
+set<ExpressionSummary::Source> ExpressionSummary::tagIdentifier(
     solidity::Identifier const& _id
 )
 {
@@ -57,10 +57,11 @@ set<ExpressionSummary::Source> ExpressionSummary::tag_identifier(
     return {};
 }
 
-set<ExpressionSummary::Source> ExpressionSummary::tag_member(
+set<ExpressionSummary::Source> ExpressionSummary::tagMember(
     solidity::MemberAccess const& _access
 )
 {
+    string const SRCLOC = srclocToStr(_access.location());
     auto const EXPRTYPE = _access.expression().annotation().type->category();
 
     // Checks for a magic type.
@@ -122,8 +123,7 @@ set<ExpressionSummary::Source> ExpressionSummary::tag_member(
             return set<Source>({ Source::Balance, Source::State });
         }
 
-        string const SOURCE = srcloc_to_str(_access.location());
-        throw runtime_error("Unexpected address member: " + SOURCE);
+        throw runtime_error("Unexpected address member: " + SRCLOC);
     }
 
     // Checks for state, input or output variables (possibly arrays).
@@ -137,8 +137,7 @@ set<ExpressionSummary::Source> ExpressionSummary::tag_member(
         }
         else
         {
-            string const SOURCE = srcloc_to_str(_access.location());
-            throw runtime_error("Unexpected array member: " + SOURCE);
+            throw runtime_error("Unexpected array member: " + SRCLOC);
         }
     }
     else if (EXPRTYPE == solidity::Type::Category::Function)
@@ -149,8 +148,7 @@ set<ExpressionSummary::Source> ExpressionSummary::tag_member(
         }
         else
         {
-            string const SOURCE = srcloc_to_str(_access.location());
-            throw runtime_error("Unexpected function member: " + SOURCE);
+            throw runtime_error("Unexpected function member: " + SRCLOC);
         }
     }
     return tags;
