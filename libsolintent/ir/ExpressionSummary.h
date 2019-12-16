@@ -65,7 +65,6 @@ protected:
      * _expr: the wrapped expression.
      */
     TrendingNumeric(solidity::Expression const& _expr);
-
 };
 
 /**
@@ -106,7 +105,7 @@ protected:
  * an expression `++(++(++(++a)))` is increasing, an expression `++(--(--a))` is
  * decreasing, and an expression `++(--(++(--a)))` is stable.
  */
-class NumericVariable final: public TrendingNumeric
+class NumericVariable final: public TrendingNumeric, public SymbolicVariable
 {
 public:
     /**
@@ -145,33 +144,30 @@ public:
 
 private:
     /**
-     * Internal constructor to set all fields.
+     * Used to branch off a new numeric variable, when the trand is updated.
      * 
-     * _expr: the expression used to create this variable
-     * _tags: descriptors for the variable
-     * _trend: the direction on which the variable moves after execution.
+     * _old: the previous numeric variable
+     * _expr: the expression which caused the trend change.
+     * _trend: the new trend
      */
     NumericVariable(
+        NumericVariable const& _old,
         solidity::Expression const& _expr,
-        std::set<Source> _tags,
         int64_t _trend
     );
 
     /**
-     * Helper method to wrap the private constructor in a shared pointer.
+     * Helper method to wrap the private constructor in a shared pointer. This
+     * will call the trend constructor on (*this).
      * 
-     * _expr: see constructor
-     * _tags: see constructor
-     * _trend: see constructor
+     * _expr: the expression which caused the trend change.
+     * _trend: the new trend
      */
-    static SummaryPointer<NumericVariable> makeSharedInternal(
+    SummaryPointer<NumericVariable> makeSharedTrend(
         solidity::Expression const& _expr,
-        std::set<Source> _tags,
         int64_t _trend
-    );
+    ) const;
 
-    // All source tags applied to this variable.
-    std::set<Source> const m_tags;
     // An aggregate of all increments and decrements.
     int64_t const m_trend;
 };
@@ -210,7 +206,7 @@ private:
 /**
  * Represents a boolean variable.
  */
-class BooleanVariable final: public BooleanSummary
+class BooleanVariable final: public BooleanSummary, public SymbolicVariable
 {
 public:
     /**
@@ -236,10 +232,6 @@ public:
     std::set<std::reference_wrapper<ExpressionSummary const>> free(
         /* ... */
     ) const override;
-
-private:
-    // All source tags applied to this variable.
-    std::set<Source> const m_tags;
 };
 
 /**

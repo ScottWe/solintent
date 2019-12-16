@@ -58,22 +58,26 @@ set<reference_wrapper<ExpressionSummary const>> NumericConstant::free() const
 // -------------------------------------------------------------------------- //
 
 NumericVariable::NumericVariable(solidity::Identifier const& _id)
-    : NumericVariable(_id, tagIdentifier(_id), 0)
+    : TrendingNumeric(_id)
+    , SymbolicVariable(_id)
+    , m_trend(0)
 {
 }
 
 NumericVariable::NumericVariable(solidity::MemberAccess const& _access)
-    : NumericVariable(_access, tagMember(_access), 0)
+    : TrendingNumeric(_access)
+    , SymbolicVariable(_access)
+    , m_trend(0)
 {
 }
 
 NumericVariable::NumericVariable(
+    NumericVariable const& _old,
     solidity::Expression const& _expr,
-    set<ExpressionSummary::Source> _tags,
     int64_t _trend
 )
     : TrendingNumeric(_expr)
-    , m_tags(move(_tags))
+    , SymbolicVariable(_old)
     , m_trend(_trend)
 {
 }
@@ -85,7 +89,7 @@ optional<solidity::rational> NumericVariable::exact() const
 
 optional<set<ExpressionSummary::Source>> NumericVariable::tags() const
 {
-    return make_optional<set<ExpressionSummary::Source>>(m_tags);
+    return make_optional<set<ExpressionSummary::Source>>(symbolTags());
 }
 
 set<reference_wrapper<ExpressionSummary const>> NumericVariable::free() const
@@ -102,19 +106,22 @@ SummaryPointer<TrendingNumeric> NumericVariable::increment(
     solidity::Expression const& _expr
 ) const
 {
-    return makeSharedInternal(_expr, m_tags, m_trend + 1);
+    return makeSharedTrend(_expr, m_trend + 1);
 }
 
-SummaryPointer<TrendingNumeric> NumericVariable::decrement(solidity::Expression const& _expr) const
+SummaryPointer<TrendingNumeric> NumericVariable::decrement(
+    solidity::Expression const& _expr
+) const
 {
-    return makeSharedInternal(_expr, m_tags, m_trend - 1);
+    return makeSharedTrend(_expr, m_trend - 1);
 }
 
-SummaryPointer<NumericVariable> NumericVariable::makeSharedInternal(
-    solidity::Expression const& _expr, set<Source> _tags, int64_t _trend
-)
+SummaryPointer<NumericVariable> NumericVariable::makeSharedTrend(
+    solidity::Expression const& _expr,
+    int64_t _trend
+) const
 {
-    auto retval = new NumericVariable(_expr, move(_tags), _trend);
+    auto retval = new NumericVariable(*this, _expr, _trend);
     if (!retval) throw bad_alloc();
     return SummaryPointer<NumericVariable>(retval);
 }
@@ -146,13 +153,13 @@ set<reference_wrapper<ExpressionSummary const>> BooleanConstant::free() const
 
 BooleanVariable::BooleanVariable(solidity::Identifier const& _id)
     : BooleanSummary(_id)
-    , m_tags(tagIdentifier(_id))
+    , SymbolicVariable(_id)
 {
 }
 
 BooleanVariable::BooleanVariable(solidity::MemberAccess const& _access)
     : BooleanSummary(_access)
-    , m_tags(tagMember(_access))
+    , SymbolicVariable(_access)
 {
 }
 
@@ -163,7 +170,7 @@ optional<bool> BooleanVariable::exact() const
 
 optional<set<ExpressionSummary::Source>> BooleanVariable::tags() const
 {
-    return m_tags;
+    return make_optional<set<ExpressionSummary::Source>>(symbolTags());
 }
 
 set<reference_wrapper<ExpressionSummary const>> BooleanVariable::free() const

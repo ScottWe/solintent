@@ -14,6 +14,7 @@
 
 #include <libsolidity/ast/ASTVisitor.h>
 #include <libsolintent/ir/ExpressionInterface.h>
+#include <libsolintent/util/SourceLocation.h>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -76,7 +77,8 @@ public:
         auto result = m_cache.find(_expr.id());
         if (result == m_cache.end())
         {
-            throw std::runtime_error("Check failed unexpectedly.");
+            std::string const SRCLOC = srclocToStr(_expr.location());
+            throw std::runtime_error("Check failed unexpectedly on: " + SRCLOC);
         }
         return result->second;
     }

@@ -96,20 +96,6 @@ protected:
      */
     explicit ExpressionSummary(solidity::Expression const& _expr);
 
-    /**
-     * Extracts all Source tags from an identifier.
-     * 
-     * _id: the identifier
-     */
-    static std::set<Source> tagIdentifier(solidity::Identifier const& _id);
-
-    /**
-     * Extracts all Source tags from a member access.
-     * 
-     * _access: the access
-     */
-    static std::set<Source> tagMember(solidity::MemberAccess const& _access);
-
 private:
     // The base expression encapsulated by this summary.
     std::reference_wrapper<solidity::Expression const> m_expr;
@@ -172,6 +158,53 @@ protected:
      * _expr: the wrapped expression.
      */
     explicit BooleanSummary(solidity::Expression const& _expr);
+};
+
+// -------------------------------------------------------------------------- //
+
+/**
+ * A secondary base-class which endows variable-related summaries the ability to
+ * analyze their declarations.
+ */
+class SymbolicVariable
+{
+public:
+    virtual ~SymbolicVariable() = 0;
+
+protected:
+    /**
+     * Resolves the identifier to its variable declaration. All labels and names
+     * will be populated in the process.
+     * 
+     * _id: the identifier to resolve
+     */
+    SymbolicVariable(solidity::Identifier const& _id);
+
+    /**
+     * Resolves the member access to the appropriate initialization site. The
+     * path to reach this variable is expanded.
+     * 
+     * _access: the member access to resolve
+     */
+    SymbolicVariable(solidity::MemberAccess const& _access);
+
+    /**
+     * Allows symbolic metadata to be forwarded to a new instantiation.
+     * 
+     * _otr: the previously annotated symbolic variable.
+     */
+    SymbolicVariable(SymbolicVariable const& _otr);
+
+    /**
+     * Returns all tags resolved during itialization.
+     */
+    std::set<ExpressionSummary::Source> symbolTags() const;
+
+private:
+    // Stores all tags extracted for this symbol during analysis.
+    std::set<ExpressionSummary::Source> m_tags;
+    // A unique identifier for this variable.
+    std::string m_symb;
 };
 
 // -------------------------------------------------------------------------- //

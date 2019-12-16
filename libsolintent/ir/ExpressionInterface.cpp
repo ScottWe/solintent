@@ -45,115 +45,6 @@ size_t ExpressionSummary::id() const
     return m_expr.get().id();
 }
 
-set<ExpressionSummary::Source> ExpressionSummary::tagIdentifier(
-    solidity::Identifier const& _id
-)
-{
-    if (_id.name() == "now")
-    {
-        return set<Source>({ Source::Miner, Source::Input });
-    }
-    // TODO: analyze scope...
-    return {};
-}
-
-set<ExpressionSummary::Source> ExpressionSummary::tagMember(
-    solidity::MemberAccess const& _access
-)
-{
-    string const SRCLOC = srclocToStr(_access.location());
-    auto const EXPRTYPE = _access.expression().annotation().type->category();
-
-    // Checks for a magic type.
-    if (EXPRTYPE == solidity::Type::Category::Magic)
-    {
-        if (_access.memberName() == "coinbase")
-        {
-            return set<Source>({ Source::Miner, Source::Input });
-        }
-        if (_access.memberName() == "difficulty")
-        {
-            return set<Source>({ Source::Miner, Source::Input });
-        }
-        else if (_access.memberName() == "gaslimit")
-        {
-            return set<Source>({ Source::Miner, Source::Input });
-        }
-        else if (_access.memberName() == "number")
-        {
-            return set<Source>({ Source::Miner, Source::Input });
-        }
-        else if (_access.memberName() == "timestamp")
-        {
-            return set<Source>({ Source::Miner, Source::Input });
-        }
-        else if (_access.memberName() == "data")
-        {
-            return set<Source>({ Source::Sender, Source::Input });
-        }
-        else if (_access.memberName() == "sender")
-        {
-            return set<Source>({ Source::Sender, Source::Input });
-        }
-        else if (_access.memberName() == "sig")
-        {
-            return set<Source>({ Source::Sender, Source::Input });
-        }
-        else if (_access.memberName() == "value")
-        {
-            return set<Source>({ Source::Sender, Source::Input });
-        }
-        else if (_access.memberName() == "gasprice")
-        {
-            return set<Source>({ Source::Input });
-        }
-        else if (_access.memberName() == "origin")
-        {
-            return set<Source>({ Source::Sender, Source::Input });
-        }
-
-        throw runtime_error("Unexpected magic field: " + _access.memberName());
-    }
-
-    // Checks for a balance.
-    if (EXPRTYPE == solidity::Type::Category::Address)
-    {
-        if (_access.memberName() == "balance")
-        {
-            return set<Source>({ Source::Balance, Source::State });
-        }
-
-        throw runtime_error("Unexpected address member: " + SRCLOC);
-    }
-
-    // Checks for state, input or output variables (possibly arrays).
-    set<Source> tags;
-    // TODO: analyze scope...
-    if (EXPRTYPE == solidity::Type::Category::Array)
-    {
-        if (_access.memberName() == "length")
-        {
-            tags.insert(Source::Length);
-        }
-        else
-        {
-            throw runtime_error("Unexpected array member: " + SRCLOC);
-        }
-    }
-    else if (EXPRTYPE == solidity::Type::Category::Function)
-    {
-        if (_access.memberName() == "selector")
-        {
-            // TODO: does this mean anything?
-        }
-        else
-        {
-            throw runtime_error("Unexpected function member: " + SRCLOC);
-        }
-    }
-    return tags;
-}
-
 bool operator<=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
 {
     return _lhs.id() <= _rhs.id();
@@ -201,6 +92,136 @@ BooleanSummary::BooleanSummary(solidity::Expression const& _expr)
 }
 
 BooleanSummary::~BooleanSummary() = default;
+
+// -------------------------------------------------------------------------- //
+
+SymbolicVariable::~SymbolicVariable() = default;
+
+SymbolicVariable::SymbolicVariable(solidity::Identifier const& _id)
+{
+    using Source = dev::solintent::ExpressionSummary::Source;
+
+    if (_id.name() == "now")
+    {
+        m_tags = { Source::Miner, Source::Input };
+    }
+    else
+    {
+        // TODO: analyze scope...
+    }
+}
+
+SymbolicVariable::SymbolicVariable(solidity::MemberAccess const& _access)
+{
+    using Source = dev::solintent::ExpressionSummary::Source;
+
+    string const MEMBER = _access.memberName();
+    string const SRCLOC = srclocToStr(_access.location());
+    auto const EXPRTYPE = _access.expression().annotation().type->category();
+
+    if (EXPRTYPE == solidity::Type::Category::Magic)
+    {
+        // Special case for magic types.
+        if (MEMBER == "coinbase")
+        {
+            m_tags = { Source::Miner, Source::Input };
+        }
+        else if (MEMBER == "difficulty")
+        {
+            m_tags = { Source::Miner, Source::Input };
+        }
+        else if (MEMBER == "gaslimit")
+        {
+            m_tags = { Source::Miner, Source::Input };
+        }
+        else if (MEMBER == "number")
+        {
+            m_tags = { Source::Miner, Source::Input };
+        }
+        else if (MEMBER == "timestamp")
+        {
+            m_tags = { Source::Miner, Source::Input };
+        }
+        else if (MEMBER == "data")
+        {
+            m_tags = { Source::Sender, Source::Input };
+        }
+        else if (MEMBER == "sender")
+        {
+            m_tags = { Source::Sender, Source::Input };
+        }
+        else if (MEMBER == "sig")
+        {
+            m_tags = { Source::Sender, Source::Input };
+        }
+        else if (MEMBER == "value")
+        {
+            m_tags = { Source::Sender, Source::Input };
+        }
+        else if (MEMBER == "gasprice")
+        {
+            m_tags = { Source::Input };
+        }
+        else if (MEMBER == "origin")
+        {
+            m_tags = { Source::Sender, Source::Input };
+        }
+        else
+        {
+            throw runtime_error("Unexpected magic field: " + MEMBER);
+        }
+    }
+    else if (EXPRTYPE == solidity::Type::Category::Address)
+    {
+        // Special case for variable address members.
+        if (MEMBER == "balance")
+        {
+            m_tags = { Source::Balance, Source::State };
+        }
+        else
+        {
+            throw runtime_error("Unexpected address member: " + SRCLOC);
+        }
+    }
+    else
+    {
+        // Checks for state, input or output variables (possibly arrays).
+        // TODO: analyze scope...
+        if (EXPRTYPE == solidity::Type::Category::Array)
+        {
+            if (MEMBER == "length")
+            {
+                m_tags.insert(Source::Length);
+            }
+            else
+            {
+                throw runtime_error("Unexpected array member: " + SRCLOC);
+            }
+        }
+        else if (EXPRTYPE == solidity::Type::Category::Function)
+        {
+            if (MEMBER == "selector")
+            {
+                // TODO: does this mean anything?
+            }
+            else
+            {
+                throw runtime_error("Unexpected function member: " + SRCLOC);
+            }
+        }
+    }
+}
+
+set<ExpressionSummary::Source> SymbolicVariable::symbolTags() const
+{
+    return m_tags;
+}
+
+SymbolicVariable::SymbolicVariable(SymbolicVariable const& _otr)
+    : m_tags(_otr.m_tags)
+    , m_symb(_otr.m_symb)
+{
+}
 
 // -------------------------------------------------------------------------- //
 
