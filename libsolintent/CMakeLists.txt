@@ -6,8 +6,10 @@ set(sources
     ir/ForwardExpressionSummary.h
     ir/IRVisitor.cpp
     ir/IRVisitor.h
-    static/AbstractAnalyzer.h
     static/AbstractAnalyzer.cpp
+    static/AbstractAnalyzer.h
+    static/AnalysisEngine.cpp
+    static/AnalysisEngine.h
     static/BoundChecker.cpp
     static/BoundChecker.h
     static/CondChecker.cpp

@@ -57,7 +57,7 @@ public:
      * 
      * _expr: the expression to analyze.
      */
-    std::shared_ptr<ExprType const> check(solidity::Expression const& _expr)
+    SummaryPointer<ExprType> check(solidity::Expression const& _expr)
     {
         // Template meta-programming approach to check if the types match.
         // For types T1, T2, T2, this becomes...

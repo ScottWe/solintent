@@ -22,7 +22,6 @@ namespace test
 
 BOOST_FIXTURE_TEST_SUITE(CondCheckerTest, CompilerFramework);
 
-
 BOOST_AUTO_TEST_CASE(literals)
 {
     char const* sourceCode = R"(
