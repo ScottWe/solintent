@@ -17,6 +17,7 @@
 
 #include <libsolidity/ast/ASTForward.h>
 #include <libsolidity/ast/Types.h>
+#include <algorithm>
 #include <optional>
 #include <set>
 
@@ -37,6 +38,8 @@ using SummaryPointer = std::shared_ptr<ExprT const>;
  * Abstracts away the key type from the analysis code.
  */
 using SummaryKey = size_t;
+
+// -------------------------------------------------------------------------- //
 
 /**
  * A generalized summary of any expression. This is a shared base-type.
@@ -78,6 +81,12 @@ public:
      */
     virtual std::optional<std::set<Source>> tags() const = 0;
 
+    /**
+     * Returns a list of the free variables upon which this operation is
+     * dependant.
+     */
+    virtual std::set<std::reference_wrapper<ExpressionSummary const>> free() const = 0;
+
 protected:
     /**
      * Declares that this summary wraps the given expression.
@@ -104,6 +113,15 @@ private:
     // The base expression encapsulated by this summary.
     std::reference_wrapper<solidity::Expression const> m_expr;
 };
+
+// Sets of ExpressionSummaries require a total ordering over all
+// ExpressionSummaries. This implements all comparisons for convenience.
+bool operator<=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
+bool operator>=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
+bool operator<(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
+bool operator>(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
+bool operator==(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
+bool operator!=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
 
 // -------------------------------------------------------------------------- //
 

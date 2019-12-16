@@ -45,6 +45,7 @@ BOOST_AUTO_TEST_CASE(numeric_const)
 
     BOOST_CHECK_EQUAL(nconst.id(), EXPR.id());
     BOOST_CHECK_EQUAL(nconst.expr().id(), EXPR.id());
+    BOOST_CHECK(nconst.free().empty());
     BOOST_CHECK(!nconst.tags().has_value());
 
     BOOST_CHECK(nconst.exact().has_value());
@@ -327,6 +328,7 @@ BOOST_AUTO_TEST_CASE(numeric_var_sourceless)
 
     BOOST_CHECK_EQUAL(srcless.id(), EXPR.id());
     BOOST_CHECK_EQUAL(srcless.expr().id(), EXPR.id());
+    BOOST_CHECK(srcless.free().find(srcless) != srcless.free().end());
     BOOST_CHECK(!srcless.exact().has_value());
     BOOST_CHECK(srcless.tags().has_value());
     if (srcless.tags().has_value())
@@ -427,6 +429,7 @@ BOOST_AUTO_TEST_CASE(bool_const)
 
     BOOST_CHECK_EQUAL(nconst.id(), EXPR.id());
     BOOST_CHECK_EQUAL(nconst.expr().id(), EXPR.id());
+    BOOST_CHECK(nconst.free().empty());
     BOOST_CHECK(!nconst.tags().has_value());
     BOOST_CHECK(nconst.exact().has_value());
     if (nconst.exact().has_value())
@@ -480,6 +483,7 @@ BOOST_AUTO_TEST_CASE(bool_var_sourceless)
 
     BOOST_CHECK_EQUAL(srcless.id(), EXPR.id());
     BOOST_CHECK_EQUAL(srcless.expr().id(), EXPR.id());
+    BOOST_CHECK(srcless.free().find(srcless) != srcless.free().end());
     BOOST_CHECK(!srcless.exact().has_value());
     BOOST_CHECK(srcless.tags().has_value());
     if (srcless.tags().has_value())

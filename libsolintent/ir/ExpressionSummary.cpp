@@ -50,6 +50,11 @@ optional<set<ExpressionSummary::Source>> NumericConstant::tags() const
     return nullopt;
 }
 
+set<reference_wrapper<ExpressionSummary const>> NumericConstant::free() const
+{
+    return {};
+}
+
 // -------------------------------------------------------------------------- //
 
 NumericVariable::NumericVariable(solidity::Identifier const& _id)
@@ -81,6 +86,11 @@ optional<solidity::rational> NumericVariable::exact() const
 optional<set<ExpressionSummary::Source>> NumericVariable::tags() const
 {
     return make_optional<set<ExpressionSummary::Source>>(m_tags);
+}
+
+set<reference_wrapper<ExpressionSummary const>> NumericVariable::free() const
+{
+    return { *this };
 }
 
 optional<int64_t> NumericVariable::trend() const
@@ -127,6 +137,11 @@ optional<set<ExpressionSummary::Source>> BooleanConstant::tags() const
     return nullopt;
 }
 
+set<reference_wrapper<ExpressionSummary const>> BooleanConstant::free() const
+{
+    return {};
+}
+
 // -------------------------------------------------------------------------- //
 
 BooleanVariable::BooleanVariable(solidity::Identifier const& _id)
@@ -151,6 +166,11 @@ optional<set<ExpressionSummary::Source>> BooleanVariable::tags() const
     return m_tags;
 }
 
+set<reference_wrapper<ExpressionSummary const>> BooleanVariable::free() const
+{
+    return { *this };
+}
+
 // -------------------------------------------------------------------------- //
 
 Comparison::Comparison(
@@ -166,10 +186,14 @@ Comparison::Comparison(
 {
 }
 
-list<SummaryPointer<NumericSummary>> Comparison::free()
+SummaryPointer<NumericSummary> Comparison::lhs() const
 {
-    // TODO: it is not yet possible to compute free variables. This will come.
-    return {};
+    return m_lhs;
+}
+
+SummaryPointer<NumericSummary> Comparison::rhs() const
+{
+    return m_rhs;
 }
 
 optional<bool> Comparison::exact() const
@@ -196,6 +220,19 @@ optional<set<ExpressionSummary::Source>> Comparison::tags() const
     }
 
     return move(opt_tags);
+}
+
+set<reference_wrapper<ExpressionSummary const>> Comparison::free() const
+{
+    set<reference_wrapper<ExpressionSummary const>> dedup;
+    
+    auto const LHS_VARS = m_lhs->free();
+    dedup.insert(LHS_VARS.begin(), LHS_VARS.end());
+
+    auto const RHS_VARS = m_rhs->free();
+    dedup.insert(RHS_VARS.begin(), RHS_VARS.end());
+
+    return dedup;
 }
 
 // -------------------------------------------------------------------------- //

@@ -154,6 +154,36 @@ set<ExpressionSummary::Source> ExpressionSummary::tagMember(
     return tags;
 }
 
+bool operator<=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() <= _rhs.id();
+}
+
+bool operator>=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() >= _rhs.id();
+}
+
+bool operator<(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() < _rhs.id();
+}
+
+bool operator>(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() > _rhs.id();
+}
+
+bool operator==(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() == _rhs.id();
+}
+
+bool operator!=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
+{
+    return _lhs.id() != _rhs.id();
+}
+
 // -------------------------------------------------------------------------- //
 
 NumericSummary::NumericSummary(solidity::Expression const& _expr)

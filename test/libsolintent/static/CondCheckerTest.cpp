@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(const_compare)
         {
             BOOST_CHECK_EQUAL(*res->exact(), (i % 2) != 0);
         }
-        // TODO: check lists once that is functional
+        BOOST_CHECK(res->free().empty());
     }
 }
 

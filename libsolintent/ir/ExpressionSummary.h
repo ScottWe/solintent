@@ -14,7 +14,6 @@
 
 #include <libsolintent/ir/ExpressionInterface.h>
 #include <functional>
-#include <list>
 #include <vector>
 
 namespace dev
@@ -88,6 +87,9 @@ public:
 
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
 
 protected:
     // In ths context, the exact value is not optional.
@@ -123,6 +125,9 @@ public:
 
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
 
     SummaryPointer<TrendingNumeric> increment(
         solidity::Expression const& _expr
@@ -187,6 +192,9 @@ public:
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
 
 private:
     // In ths context, the exact value is not optional.
@@ -217,6 +225,9 @@ public:
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
 
 private:
     // All source tags applied to this variable.
@@ -247,13 +258,20 @@ public:
     );
 
     /**
-     * Returns a list of the free variables upon which this comparison is
-     * dependant.
+     * Accessor to the left-hand side.
      */
-    std::list<SummaryPointer<NumericSummary>> free();
+    SummaryPointer<NumericSummary> lhs() const;
+
+    /**
+     * Accessor to the right-hand side.
+     */
+    SummaryPointer<NumericSummary> rhs() const;
 
     std::optional<bool> exact() const override;
     std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
 
 private:
     // Abstraction of the comparison between the lhs and rhs.
