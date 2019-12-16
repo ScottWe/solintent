@@ -12,8 +12,12 @@
 
 #include <libsolintent/static/BoundChecker.h>
 
+#include <libsolidity/ast/AST.h>
+#include <libsolintent/ir/ExpressionSummary.h>
 #include <libsolintent/util/SourceLocation.h>
+#include <memory>
 #include <stdexcept>
+#include <utility>
 
 using namespace std;
 
@@ -21,35 +25,6 @@ namespace dev
 {
 namespace solintent
 {
-
-// -------------------------------------------------------------------------- //
-
-shared_ptr<NumericSummary const> BoundChecker::check(
-    solidity::Expression const& _expr
-)
-{
-    // Ensures the type is ordinal.
-    switch (_expr.annotation().type->category())
-    {
-    case solidity::Type::Category::Integer:
-    case solidity::Type::Category::RationalNumber:
-    case solidity::Type::Category::FixedPoint:
-        break;
-    default:
-        throw runtime_error("BoundChecker requires numeric expressions.");
-    }
-
-    // Analyzes bounds.
-    _expr.accept(*this);
-
-    // Queries results.
-    auto result = m_cache.find(_expr.id());
-    if (result == m_cache.end())
-    {
-        throw runtime_error("Bound check failed unexpectedly.");
-    }
-    return result->second;
-}
 
 // -------------------------------------------------------------------------- //
 
@@ -84,23 +59,26 @@ bool BoundChecker::visit(solidity::UnaryOperation const& _node)
     auto child = check(_node.subExpression());
 
     // TODO: dynamic casts... no.
-    shared_ptr<NumericSummary const> result;
+    SummaryPointer<NumericSummary> result;
     switch (_node.getOperator())
     {
     case solidity::Token::BitNot:
         throw runtime_error("Binary negation is not captured by this model.");
     case solidity::Token::Inc:
-        result = dynamic_pointer_cast<TrendingNumeric const>(child)->increment();
+        result = dynamic_pointer_cast<TrendingNumeric const>(
+            child
+        )->increment(_node);
         break;
     case solidity::Token::Dec:
-        result = dynamic_pointer_cast<TrendingNumeric const>(child)->decrement();
+        result = dynamic_pointer_cast<TrendingNumeric const>(
+            child
+        )->decrement(_node);
         break;
     default:
         throw runtime_error("Unexpected unary numeric operation: " + TOKSTR);
     }
 
-    // TODO: inaccuracy in expression...
-    m_cache[_node.id()] = move(result);
+    write_to_cache(move(result));
     return false;
 }
 
@@ -118,9 +96,7 @@ bool BoundChecker::visit(solidity::FunctionCall const& _node)
 
 bool BoundChecker::visit(solidity::MemberAccess const& _node)
 {
-    // TODO: code duplication
-    auto summary = make_shared<NumericVariable>(_node);
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(make_shared<NumericVariable>(_node));
     return false;
 }
 
@@ -139,7 +115,7 @@ bool BoundChecker::visit(solidity::IndexRangeAccess const& _node)
 bool BoundChecker::visit(solidity::Identifier const& _node)
 {
     // TODO: code duplication
-    shared_ptr<NumericSummary const> summary;
+    SummaryPointer<NumericSummary> summary;
 
     // Checks if this expression has a constant value.
     auto const* REF = _node.annotation().referencedDeclaration;
@@ -164,7 +140,7 @@ bool BoundChecker::visit(solidity::Identifier const& _node)
     }
 
     // Records entry.
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(move(summary));
     return false;
 }
 
@@ -179,8 +155,7 @@ bool BoundChecker::visit(solidity::Literal const& _node)
         throw runtime_error("Numeric literal is not convertible to rational.");
     }
 
-    auto summary = make_shared<NumericConstant>(_node, val);
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(make_shared<NumericConstant>(_node, val));
     return false;
 }
 

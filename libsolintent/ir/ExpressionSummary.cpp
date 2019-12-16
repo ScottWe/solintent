@@ -88,14 +88,16 @@ optional<int64_t> NumericVariable::trend() const
     return make_optional<int64_t>(m_trend);
 }
 
-SummaryPointer<TrendingNumeric> NumericVariable::increment() const
+SummaryPointer<TrendingNumeric> NumericVariable::increment(
+    solidity::Expression const& _expr
+) const
 {
-    return make_shared_internal(expr(), m_tags, m_trend + 1);
+    return make_shared_internal(_expr, m_tags, m_trend + 1);
 }
 
-SummaryPointer<TrendingNumeric> NumericVariable::decrement() const
+SummaryPointer<TrendingNumeric> NumericVariable::decrement(solidity::Expression const& _expr) const
 {
-    return make_shared_internal(expr(), m_tags, m_trend - 1);
+    return make_shared_internal(_expr, m_tags, m_trend - 1);
 }
 
 SummaryPointer<NumericVariable> NumericVariable::make_shared_internal(

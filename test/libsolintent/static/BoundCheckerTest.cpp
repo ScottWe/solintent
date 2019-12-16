@@ -7,6 +7,7 @@
 #include <libsolintent/static/BoundChecker.h>
 
 #include <test/CompilerFramework.h>
+#include <libsolintent/ir/ExpressionSummary.h>
 #include <libsolintent/util/SourceLocation.h>
 #include <boost/test/unit_test.hpp>
 

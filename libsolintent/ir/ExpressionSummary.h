@@ -32,11 +32,20 @@ public:
     virtual ~TrendingNumeric() = 0;
 
     /**
-     * Simulates invocations of `++` (resp. `--`). By calling these operations,
-     * a new TrendingNumeric is produced, in which the trend has been updated.
+     * Simulates invocations of `++`. By calling this operations, a new
+     * TrendingNumeric is produced, in which the trend has been incremented.
      */
-    virtual SummaryPointer<TrendingNumeric> increment() const = 0;
-    virtual SummaryPointer<TrendingNumeric> decrement() const = 0;
+    virtual SummaryPointer<TrendingNumeric> increment(
+        solidity::Expression const& _expr
+    ) const = 0;
+
+    /**
+     * Simulates invocations of `--`. By calling this operations, a new
+     * TrendingNumeric is produced, in which the trend has been decremented.
+     */
+    virtual SummaryPointer<TrendingNumeric> decrement(
+        solidity::Expression const& _expr
+    ) const = 0;
 
     /**
      * In the given expression, this trending lval may be wrapped by inplace
@@ -114,8 +123,13 @@ public:
     std::optional<solidity::rational> exact() const override;
     std::optional<std::set<Source>> tags() const override;
 
-    SummaryPointer<TrendingNumeric> increment() const override;
-    SummaryPointer<TrendingNumeric> decrement() const override;
+    SummaryPointer<TrendingNumeric> increment(
+        solidity::Expression const& _expr
+    ) const override;
+
+    SummaryPointer<TrendingNumeric> decrement(
+        solidity::Expression const& _expr
+    ) const override;
 
     std::optional<int64_t> trend() const override;
 

@@ -363,10 +363,10 @@ BOOST_AUTO_TEST_CASE(numeric_incr_decr)
     );
 
     NumericVariable original(EXPR);
-    auto derived1 = original.increment();
-    auto derived2 = derived1->decrement();
-    auto derived3 = derived2->decrement();
-    auto derived4 = derived3->increment();
+    auto derived1 = original.increment(EXPR);
+    auto derived2 = derived1->decrement(EXPR);
+    auto derived3 = derived2->decrement(EXPR);
+    auto derived4 = derived3->increment(EXPR);
 
     auto original_chk = original.trend().has_value();
     auto derived1_chk = derived1->trend().has_value();

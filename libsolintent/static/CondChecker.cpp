@@ -12,7 +12,9 @@
 
 #include <libsolintent/static/CondChecker.h>
 
+#include <libsolintent/ir/ExpressionSummary.h>
 #include <libsolintent/util/SourceLocation.h>
+#include <algorithm>
 #include <stdexcept>
 
 using namespace std;
@@ -21,30 +23,6 @@ namespace dev
 {
 namespace solintent
 {
-
-// -------------------------------------------------------------------------- //
-
-shared_ptr<BooleanSummary const> CondChecker::check(
-    solidity::Expression const& _expr
-)
-{
-    // Ensures the type is boolean.
-    if (_expr.annotation().type->category() != solidity::Type::Category::Bool)
-    {
-        throw runtime_error("CondChecker requires boolean expressions.");
-    }
-
-    // Analyzes condition.
-    _expr.accept(*this);
-
-    // Queries results.
-    auto result = m_cache.find(_expr.id());
-    if (result == m_cache.end())
-    {
-        throw runtime_error("Bound check failed unexpectedly.");
-    }
-    return result->second;
-}
 
 // -------------------------------------------------------------------------- //
 
@@ -80,8 +58,28 @@ bool CondChecker::visit(solidity::UnaryOperation const& _node)
 
 bool CondChecker::visit(solidity::BinaryOperation const& _node)
 {
-    (void) _node;
-    throw;
+    string const TOKSTR = solidity::TokenTraits::friendlyName(
+        _node.getOperator()
+    );
+
+    auto LHS = check(_node.leftExpression());
+    auto RHS = check(_node.rightExpression());
+
+    switch (_node.getOperator())
+    {
+    case solidity::Token::Equal:
+    case solidity::Token::NotEqual:
+    case solidity::Token::LessThan:
+    case solidity::Token::GreaterThan:
+    case solidity::Token::LessThanOrEqual:
+    case solidity::Token::GreaterThanOrEqual:
+        throw runtime_error("Comparison operators not yet supported.");
+    case solidity::Token::Or:
+    case solidity::Token::And:
+        throw runtime_error("Connective operators not yet supported.");
+    default:
+        throw runtime_error("Unexpected boolean operator:" + TOKSTR);
+    }
 }
 
 bool CondChecker::visit(solidity::FunctionCall const& _node)
@@ -93,8 +91,7 @@ bool CondChecker::visit(solidity::FunctionCall const& _node)
 bool CondChecker::visit(solidity::MemberAccess const& _node)
 {
     // TODO: code duplication
-    auto summary = make_shared<BooleanVariable>(_node);
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(make_shared<BooleanVariable>(_node));
     return false;
 }
 
@@ -113,7 +110,7 @@ bool CondChecker::visit(solidity::IndexRangeAccess const& _node)
 bool CondChecker::visit(solidity::Identifier const& _node)
 {
     // TODO: code duplication
-    shared_ptr<BooleanSummary const> summary;
+    SummaryPointer<BooleanSummary const> summary;
 
     // Checks if this expression has a constant value.
     auto const* REF = _node.annotation().referencedDeclaration;
@@ -138,7 +135,7 @@ bool CondChecker::visit(solidity::Identifier const& _node)
     }
 
     // Records entry.
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(move(summary));
     return false;
 }
 
@@ -159,8 +156,7 @@ bool CondChecker::visit(solidity::Literal const& _node)
     }
 
     // Records the value
-    auto summary = make_shared<BooleanConstant>(_node, val);
-    m_cache[summary->id()] = move(summary);
+    write_to_cache(move(make_shared<BooleanConstant>(_node, val)));
     return false;
 }
 
