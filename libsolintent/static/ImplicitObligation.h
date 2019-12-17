@@ -204,5 +204,48 @@ using StatementPattern = detail::SpecializedPattern<solidity::Statement>;
 
 // -------------------------------------------------------------------------- //
 
+/**
+ * The ImplicitObligation, as described in the file header.
+ */
+class ImplicitObligation: private solidity::ASTConstVisitor
+{
+public:
+    /**
+     * Creates a proof rule for code fragments matching the AssertionTemplate.
+     * Initially, AssertionTemplate(Program) |= False.
+     * 
+     * _name: the name displayed to the user when applying this rule
+     * _desc: the information displayed to the user while inspecting this rule
+     * _tmpl: a description of the code fragments which raise this obligation
+     */
+    ImplicitObligation(
+        std::string _name,
+        std::string _desc,
+        std::shared_ptr<AssertionTemplate> _tmpl
+    );
+
+    /**
+     * Using the assertion templates, this will generate a list of suspicious
+     * statements. These are implicit obligations which must be dispatched.
+     */
+    std::vector<solidity::ASTNode const*> findSuspects(
+        std::vector<solidity::SourceUnit const*> const& _fullprog
+    );
+
+private:
+    // The name of this obligation.
+    std::string m_name;
+    // A "human-readable" description of this obligation.
+    std::string m_desc;
+    // The template used to nominate and elect assertion candidates.
+    std::shared_ptr<AssertionTemplate> m_tmpl;
+    // The current set of candidate suspects.
+    std::vector<solidity::ASTNode const*> m_suspects;
+
+    void endVisitNode(solidity::ASTNode const& _node) override;
+};
+
+// -------------------------------------------------------------------------- //
+
 }
 }

@@ -30,6 +30,21 @@ public:
     }
 };
 
+class NameTmpl: public AssertionTemplate
+{
+public:
+    NameTmpl(): AssertionTemplate(AssertionTemplate::Type::Function) {}
+
+    bool visit(solidity::FunctionDefinition const&_node) override
+    {
+        if (_node.name().find("bad") != string::npos)
+        {
+            raiseAlarm();
+        }
+        return false;
+    }
+};
+
 class TestPattern: public ContractPattern
 {
 public:
@@ -124,6 +139,32 @@ BOOST_AUTO_TEST_CASE(program_pattern)
     {
         BOOST_CHECK_EQUAL(*result, 10);
     }
+}
+
+BOOST_AUTO_TEST_CASE(suspects)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function good_f() public view { }
+            function good_g() public view { }
+            function good_h() public view { }
+            function bad_f() public view { }
+            function bad_g() public view { }
+            function bad_h() public view { }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK_EQUAL(CONTRACT->definedFunctions().size(), 6);
+
+    auto tmpl = make_shared<NameTmpl>();
+
+    ImplicitObligation obligation("", "", tmpl);
+    auto suspects = obligation.findSuspects({ AST });
+
+    BOOST_CHECK_EQUAL(suspects.size(), 3);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

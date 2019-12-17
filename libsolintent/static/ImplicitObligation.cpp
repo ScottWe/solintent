@@ -141,5 +141,39 @@ void detail::ProgramPattern::aggregate()
 
 // -------------------------------------------------------------------------- //
 
+ImplicitObligation::ImplicitObligation(
+    string _name, string _desc, shared_ptr<AssertionTemplate> _tmpl
+)
+    : m_name(_name)
+    , m_desc(_desc)
+    , m_tmpl(_tmpl)
+{
+}
+
+vector<solidity::ASTNode const*> ImplicitObligation::findSuspects(
+    vector<solidity::SourceUnit const*> const& _fullprog
+)
+{
+    m_suspects.clear();
+    for (auto const* unit : _fullprog)
+    {
+        unit->accept(*this);
+    }
+    return m_suspects;
+}
+
+void ImplicitObligation::endVisitNode(solidity::ASTNode const& _node)
+{
+    if (m_tmpl->isApplicableTo(_node))
+    {
+        if (m_tmpl->isSuspect(_node))
+        {
+            m_suspects.push_back(&_node);
+        }
+    }
+}
+
+// -------------------------------------------------------------------------- //
+
 }
 }
