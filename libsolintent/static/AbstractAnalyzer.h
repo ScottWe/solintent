@@ -13,6 +13,7 @@
 #pragma once
 
 #include <libsolidity/ast/ASTVisitor.h>
+#include <libsolintent/ir/IRSummary.h>
 #include <libsolintent/util/SourceLocation.h>
 #include <map>
 #include <memory>
@@ -36,7 +37,7 @@ class AbstractAnalyzer: public solidity::ASTConstVisitor
 public:
     // This assumes all SummaryTypes are IRSummaries.
     static_assert(
-        std::is_base_of_v<ExpressionSummary, SummaryType>,
+        std::is_base_of_v<IRSummary, SummaryType>,
         "For interoperability, SummaryType must be of type IRSummary."
     );
 
