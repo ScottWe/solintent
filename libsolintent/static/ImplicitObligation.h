@@ -27,6 +27,10 @@
 #pragma once
 
 #include <libsolidity/ast/ASTVisitor.h>
+#include <libsolintent/ir/ExpressionInterface.h>
+#include <libsolintent/util/Generic.h>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -91,6 +95,112 @@ private:
     // Is true if and only if a suspect was detected on the current inspection.
     bool m_found_suspect;
 };
+
+// -------------------------------------------------------------------------- //
+
+namespace detail
+{
+/**
+ * An interface used to abduct a proof for an associated assertion template.
+ * This is a detail as it is not specialized to any given obligaiton.
+ */
+class ProgramPattern: protected solidity::ASTConstVisitor
+{
+public:
+    /**
+     * This method will try to dispatch the properly typed obligation. It will
+     * use the local scope of the contract to abduct a solution.
+     * 
+     * _obligation: the obligation to resolve
+     * _locality: the contract on which the obligation was generated
+     */
+    virtual std::optional<int64_t> abductExplanation(
+        solidity::ContractDefinition const& _obligation,
+        solidity::ContractDefinition const& _locality
+    );
+    virtual std::optional<int64_t> abductExplanation(
+        solidity::FunctionDefinition const& _obligation,
+        solidity::ContractDefinition const& _locality
+    );
+    virtual std::optional<int64_t> abductExplanation(
+        solidity::Statement const& _obligation,
+        solidity::ContractDefinition const& _locality
+    );
+
+    virtual ~ProgramPattern() = 0;
+
+protected:
+    /**
+     * Returns true if the solution has been set.
+     */
+    bool hasSolution() const;
+
+    /**
+     * Sets the solution, if one has not been set. If a solution is set twice,
+     * then an exception is raised.
+     * 
+     * _sol: the exception
+     */
+    void setSolution(int64_t _sol);
+
+    /**
+     * Allows for a callback once the analysis has ended.
+     */
+    virtual void aggregate();
+
+    /**
+     * Returns the active obligation. This should be specialized to the actual
+     * obligation type.
+     */
+    virtual solidity::ASTNode const& activeObligation() const = 0;
+
+public:
+    // The aducted solution.
+    std::optional<int64_t> m_solution{std::nullopt};
+};
+
+/**
+ * Uses template metaprogramming to automatically bootstrap the entry for each
+ * obligation. This works, as there is a single structure, which only vary in
+ * parameter type.
+ */
+template <typename T>
+class SpecializedPattern: public ProgramPattern
+{
+public:
+    std::optional<int64_t> abductExplanation(
+        T const& _obligation, solidity::ContractDefinition const& _locality
+    ) override
+    {
+        ScopedSet obligationGuard(m_active_obligation, &_obligation);
+        ScopedSet solutionGuard(m_solution, std::optional<int64_t>{});
+        _locality.accept(*this);
+        aggregate();
+        return m_solution;
+    }
+
+    virtual ~SpecializedPattern()
+    {
+    }
+
+protected:
+    T const& activeObligation() const override
+    {
+        return (*m_active_obligation);
+    }
+
+private:
+    // Hides the solution raw data from concrete implementations.
+    using ProgramPattern::m_solution;
+
+    // The active structural obgliation.
+    T const* m_active_obligation{nullptr};
+};
+}
+
+using ContractPattern = detail::SpecializedPattern<solidity::ContractDefinition>;
+using FunctionPattern = detail::SpecializedPattern<solidity::FunctionDefinition>;
+using StatementPattern = detail::SpecializedPattern<solidity::Statement>;
 
 // -------------------------------------------------------------------------- //
 

@@ -30,6 +30,23 @@ public:
     }
 };
 
+class TestPattern: public ContractPattern
+{
+public:
+    void aggregate() override
+    {
+        setSolution(count);
+    }
+
+    bool visit(solidity::Literal const&)
+    {
+        count += activeObligation().definedFunctions().size();
+        return false;
+    }
+
+    int64_t count{0};
+};
+
 BOOST_FIXTURE_TEST_SUITE(ObligationTests, CompilerFramework);
 
 BOOST_AUTO_TEST_CASE(assertion_template)
@@ -79,6 +96,34 @@ BOOST_AUTO_TEST_CASE(assertion_template)
     BOOST_CHECK(!functionTemplate.isSuspect(*IDLESS_FUNC));
     BOOST_CHECK(functionTemplate.isSuspect(*FUNC));
     BOOST_CHECK(!functionTemplate.isSuspect(*IDLESS_FUNC));
+}
+
+BOOST_AUTO_TEST_CASE(program_pattern)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function f() public view {
+                1; 2; 3;
+            }
+            function g() public view {
+                4; 5;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK_EQUAL(CONTRACT->definedFunctions().size(), 2);
+
+    TestPattern tester;
+    auto result = tester.abductExplanation(*CONTRACT, *CONTRACT);
+
+    BOOST_CHECK(result.has_value());
+    if (result.has_value())
+    {
+        BOOST_CHECK_EQUAL(*result, 10);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END();

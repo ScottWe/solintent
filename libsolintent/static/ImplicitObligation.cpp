@@ -93,5 +93,53 @@ void AssertionTemplate::raiseAlarm()
 
 // -------------------------------------------------------------------------- //
 
+detail::ProgramPattern::~ProgramPattern()
+{
+}
+
+optional<int64_t> detail::ProgramPattern::abductExplanation(
+    solidity::ContractDefinition const& _obligation,
+    solidity::ContractDefinition const& _locality
+)
+{
+    throw runtime_error("The Pattern must be specialized for Contracts");
+}
+
+optional<int64_t> detail::ProgramPattern::abductExplanation(
+    solidity::FunctionDefinition const& _obligation,
+    solidity::ContractDefinition const& _locality
+)
+{
+    throw runtime_error("The Pattern must be specialized for Functions.");
+}
+
+optional<int64_t> detail::ProgramPattern::abductExplanation(
+    solidity::Statement const& _obligation,
+    solidity::ContractDefinition const& _locality
+)
+{
+    throw runtime_error("The Pattern must be specialized for Statements.");
+}
+
+bool detail::ProgramPattern::hasSolution() const
+{
+    m_solution.has_value();
+}
+
+void detail::ProgramPattern::setSolution(int64_t _sol)
+{
+    if (hasSolution())
+    {
+        throw runtime_error("Solution already set by aduction.");
+    }
+    m_solution.emplace(_sol);
+}
+
+void detail::ProgramPattern::aggregate()
+{
+}
+
+// -------------------------------------------------------------------------- //
+
 }
 }
