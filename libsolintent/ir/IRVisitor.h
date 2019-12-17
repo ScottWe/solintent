@@ -4,7 +4,7 @@
  * Visitor pattern for IR.
  */
 
-#include <libsolintent/ir/ForwardExpressionSummary.h>
+#include <libsolintent/ir/ForwardIR.h>
 
 #pragma once
 

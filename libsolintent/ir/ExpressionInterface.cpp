@@ -29,51 +29,11 @@ namespace solintent
 // -------------------------------------------------------------------------- //
 
 ExpressionSummary::ExpressionSummary(solidity::Expression const& _expr)
-    : m_expr(_expr)
+    : SpecializedIR(_expr)
 {
 }
 
 ExpressionSummary::~ExpressionSummary() = default;
-
-solidity::Expression const& ExpressionSummary::expr() const
-{
-    return m_expr;
-}
-
-size_t ExpressionSummary::id() const
-{
-    return m_expr.get().id();
-}
-
-bool operator<=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() <= _rhs.id();
-}
-
-bool operator>=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() >= _rhs.id();
-}
-
-bool operator<(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() < _rhs.id();
-}
-
-bool operator>(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() > _rhs.id();
-}
-
-bool operator==(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() == _rhs.id();
-}
-
-bool operator!=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs)
-{
-    return _lhs.id() != _rhs.id();
-}
 
 // -------------------------------------------------------------------------- //
 

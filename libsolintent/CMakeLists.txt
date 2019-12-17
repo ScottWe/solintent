@@ -3,7 +3,9 @@ set(sources
     ir/ExpressionInterface.h
     ir/ExpressionSummary.cpp
     ir/ExpressionSummary.h
-    ir/ForwardExpressionSummary.h
+    ir/ForwardIR.h
+    ir/IRSummary.cpp
+    ir/IRSummary.h
     ir/IRVisitor.cpp
     ir/IRVisitor.h
     static/AbstractAnalyzer.cpp

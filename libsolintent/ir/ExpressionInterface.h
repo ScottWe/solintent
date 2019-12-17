@@ -17,7 +17,7 @@
 
 #include <libsolidity/ast/ASTVisitor.h>
 #include <libsolidity/ast/Types.h>
-#include <libsolintent/ir/IRVisitor.h>
+#include <libsolintent/ir/IRSummary.h>
 #include <algorithm>
 #include <list>
 #include <optional>
@@ -31,22 +31,9 @@ namespace solintent
 // -------------------------------------------------------------------------- //
 
 /**
- * Abstracts away the pointer model from the analysis code.
- */
-template <typename ExprT>
-using SummaryPointer = std::shared_ptr<ExprT const>;
-
-/**
- * Abstracts away the key type from the analysis code.
- */
-using SummaryKey = size_t;
-
-// -------------------------------------------------------------------------- //
-
-/**
  * A generalized summary of any expression. This is a shared base-type.
  */
-class ExpressionSummary: public IRDestination
+class ExpressionSummary: public detail::SpecializedIR<solidity::Expression>
 {
 public:
     /**
@@ -64,18 +51,6 @@ public:
     };
 
     virtual ~ExpressionSummary() = 0;
-
-    /**
-     * Returns a reference to the underlying expression.
-     */
-    solidity::Expression const& expr() const;
-
-    /**
-     * Returns an identifier which uniquely identifies this summary from any
-     * other expression produced by the same system.
-     * TODO: generalize this so analysis chain is encoded in key.
-     */
-    SummaryKey id() const;
 
     /**
      * If this expression is tainted by mutable variables, this will return all
@@ -96,20 +71,7 @@ protected:
      * _expr: the wrapped expression.
      */
     explicit ExpressionSummary(solidity::Expression const& _expr);
-
-private:
-    // The base expression encapsulated by this summary.
-    std::reference_wrapper<solidity::Expression const> m_expr;
 };
-
-// Sets of ExpressionSummaries require a total ordering over all
-// ExpressionSummaries. This implements all comparisons for convenience.
-bool operator<=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
-bool operator>=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
-bool operator<(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
-bool operator>(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
-bool operator==(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
-bool operator!=(ExpressionSummary const& _lhs, ExpressionSummary const& _rhs);
 
 // -------------------------------------------------------------------------- //
 

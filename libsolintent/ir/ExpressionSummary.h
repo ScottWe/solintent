@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <libsolintent/ir/ForwardExpressionSummary.h>
-
 #include <libsolintent/ir/ExpressionInterface.h>
 #include <functional>
 #include <vector>
