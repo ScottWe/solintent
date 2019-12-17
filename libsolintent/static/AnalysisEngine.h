@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractExpressionAnalyzer.h>
 #include <memory>
 #include <type_traits>
 

@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractExpressionAnalyzer.h>
 
 namespace dev
 {

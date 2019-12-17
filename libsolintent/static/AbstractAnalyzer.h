@@ -13,7 +13,6 @@
 #pragma once
 
 #include <libsolidity/ast/ASTVisitor.h>
-#include <libsolintent/ir/ExpressionInterface.h>
 #include <libsolintent/util/SourceLocation.h>
 #include <map>
 #include <memory>
@@ -25,29 +24,20 @@ namespace dev
 namespace solintent
 {
 
-// -------------------------------------------------------------------------- //
-
 /**
  * The base class for all abstract analyzers. This captures the AST traversal
  * model and caching strategy.
  * 
- * ExprType: the most general ExpressionSummary type returned by this analyzer
- * SolType: a list of 0 or more types accepted by this analyzer
+ * SummaryType: the most general IRSummary type returned by this analyzer
  */
-template <class ExprType, solidity::Type::Category ... SolType>
-class AbstractExpressionAnalyzer: public solidity::ASTConstVisitor
+template <class SummaryType>
+class AbstractAnalyzer: public solidity::ASTConstVisitor
 {
 public:
-    // This assumes all ExprTypes are ExpressionSummaries.
+    // This assumes all SummaryTypes are IRSummaries.
     static_assert(
-        std::is_base_of_v<ExpressionSummary, ExprType>,
-        "For interoperability, ExprType must be of type ExpressionSummary."
-    );
-
-    // Each analyzer must operate on at least one Solidity expression type.
-    static_assert(
-        sizeof...(SolType) > 0,
-        "Rejection of every expression type is disallowed."
+        std::is_base_of_v<ExpressionSummary, SummaryType>,
+        "For interoperability, SummaryType must be of type IRSummary."
     );
 
     /**
@@ -58,18 +48,8 @@ public:
      * 
      * _expr: the expression to analyze.
      */
-    SummaryPointer<ExprType> check(solidity::Expression const& _expr)
+    virtual SummaryPointer<SummaryType> check(solidity::ASTNode const& _expr)
     {
-        // Template meta-programming approach to check if the types match.
-        // For types T1, T2, T2, this becomes...
-        //     bool const MATCH = ((TYPE==T1) || ((TYPE==T2) || (TYPE==T1)))
-        auto const TYPE = _expr.annotation().type->category();
-        bool const MATCH = (... || (TYPE == SolType));
-        if (!MATCH)
-        {
-            throw std::runtime_error("_expr type does not match analyzer.");
-        }
-
         // Performs resolution.
         _expr.accept(*this);
 
@@ -89,7 +69,7 @@ protected:
      * 
      * _summary: the data to write to cache.
      */
-    void write_to_cache(SummaryPointer<ExprType> && _summary)
+    void write_to_cache(SummaryPointer<SummaryType> && _summary)
     {
         auto const ID = _summary->id();
         m_cache[std::move(ID)] = std::move(_summary);
@@ -97,76 +77,8 @@ protected:
 
 private:
     // A cache which is computed on-the-fly for bound estimations.
-    std::map<SummaryKey, SummaryPointer<ExprType>> m_cache;
+    std::map<SummaryKey, SummaryPointer<SummaryType>> m_cache;
 };
-
-namespace detail
-{
-
-using NumericAnalyzer = AbstractExpressionAnalyzer<
-    NumericSummary,
-    solidity::Type::Category::Integer,
-    solidity::Type::Category::RationalNumber,
-    solidity::Type::Category::FixedPoint
->;
-
-using BooleanAnalyzer = AbstractExpressionAnalyzer<
-    BooleanSummary, solidity::Type::Category::Bool
->;
-
-}
-
-// -------------------------------------------------------------------------- //
-
-/**
- * Speicalizes the AbstractAnalyzer for any numeric case.
- */
-class NumericAnalyzer: public detail::NumericAnalyzer
-{
-public:
-    /**
-     * Allows the NumericAnalyzer to access some BooleanAnalyzer.
-     * 
-     * _analyzer: the BooleanAnalyzer used to resolve boolean expressions.
-     */
-    void setBooleanAnalyzer(std::shared_ptr<detail::BooleanAnalyzer> _analyzer);
-
-protected:
-    /**
-     * Returns the current BooleanAnalyzer, or otherwise raises an exception.
-     */
-    detail::BooleanAnalyzer & getBooleanAnalyzer();
-
-private:
-    std::shared_ptr<detail::BooleanAnalyzer> m_boolean_analyzer;
-};
-
-// -------------------------------------------------------------------------- //
-
-/**
- * Speicalizes the AbstractAnalyzer for any boolean case.
- */
-class BooleanAnalyzer: public detail::BooleanAnalyzer
-{
-public:
-    /**
-     * Allows the BooleanAnalyzer to access some NumericAnalyzer.
-     * 
-     * _analyzer: the NumericAnalyzer used to resolve rational expressions.
-     */
-    void setNumericAnalyzer(std::shared_ptr<detail::NumericAnalyzer> _analyzer);
-
-protected:
-    /**
-     * Returns the current NumericAnalyzer, or otherwise raises an exception.
-     */
-    detail::NumericAnalyzer & getNumericAnalyzer();
-
-private:
-    std::shared_ptr<detail::NumericAnalyzer> m_numeric_analyzer;
-};
-
-// -------------------------------------------------------------------------- //
 
 }
 }

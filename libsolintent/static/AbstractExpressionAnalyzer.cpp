@@ -1,16 +1,10 @@
 /**
- * In this framework, analyzers convert Solidity AST's into some IR, better fit
- * for analysis. The AbstractAnalyzer extracts certain behaviours of these
- * analyzers, to allow the compiler to autogenerate this boilerplate.
- */
-
-/**
  * @author Arthur Scott Wesley <aswesley@uwaterloo.ca>
  * @date 2019
- * Generalized, type-specific, analyzer interface.
+ * Specializes the AbstractAnalyzer to expressions.
  */
 
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractExpressionAnalyzer.h>
 
 #include <stdexcept>
 
