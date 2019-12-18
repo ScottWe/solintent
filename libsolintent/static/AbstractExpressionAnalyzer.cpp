@@ -17,14 +17,16 @@ namespace solintent
 
 // -------------------------------------------------------------------------- //
 
-void NumericAnalyzer::setBooleanAnalyzer(
+BooleanAnalysisClient::~BooleanAnalysisClient() = default;
+
+void BooleanAnalysisClient::setBooleanAnalyzer(
     shared_ptr<detail::BooleanAnalyzer> _analyzer
 )
 {
     m_boolean_analyzer = move(_analyzer);
 }
 
-detail::BooleanAnalyzer & NumericAnalyzer::getBooleanAnalyzer()
+detail::BooleanAnalyzer & BooleanAnalysisClient::getBooleanAnalyzer()
 {
     if (!m_boolean_analyzer)
     {
@@ -35,14 +37,16 @@ detail::BooleanAnalyzer & NumericAnalyzer::getBooleanAnalyzer()
 
 // -------------------------------------------------------------------------- //
 
-void BooleanAnalyzer::setNumericAnalyzer(
+NumericAnalysisClient::~NumericAnalysisClient() = default;
+
+void NumericAnalysisClient::setNumericAnalyzer(
     shared_ptr<detail::NumericAnalyzer> _analyzer
 )
 {
     m_numeric_analyzer = move(_analyzer);
 }
 
-detail::NumericAnalyzer & BooleanAnalyzer::getNumericAnalyzer()
+detail::NumericAnalyzer & NumericAnalysisClient::getNumericAnalyzer()
 {
     if (!m_numeric_analyzer)
     {

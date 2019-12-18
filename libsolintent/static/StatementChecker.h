@@ -11,14 +11,14 @@
 #pragma once
 
 #include <libsolintent/ir/StatementInterface.h>
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractStatementAnalyzer.h>
 
 namespace dev
 {
 namespace solintent
 {
 
-class StatementChecker: public AbstractAnalyzer<StatementSummary>
+class StatementChecker: public StatementAnalyzer
 {
 protected:
 	bool visit(solidity::Block const& _node) override;

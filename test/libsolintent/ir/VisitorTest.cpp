@@ -8,6 +8,7 @@
 
 #include <libsolidity/ast/AST.h>
 #include <libsolintent/ir/ExpressionSummary.h>
+#include <libsolintent/ir/StatementSummary.h>
 #include <boost/test/unit_test.hpp>
 
 using namespace std;
@@ -51,6 +52,13 @@ public:
         cp = true;
     }
 
+    void acceptIR(TreeBlockSummary const&) override
+    {
+        tbs = true;
+    }
+
+    bool tbs{false};
+
     bool nc{false};
     bool nv{false};
     bool bc{false};
@@ -76,11 +84,14 @@ BOOST_AUTO_TEST_CASE(visit)
     );
     id.annotation().referencedDeclaration = (&decl);
 
+    solidity::Block block(solidity::ASTNode::SourceLocation{}, nullptr, {});
+
     auto nc = make_shared<NumericConstant>(id, 1);
     NumericVariable nv(id);
     BooleanConstant bc(id, false);
     BooleanVariable bv(id);
     Comparison cp(id, Comparison::Condition::LessThan, nc, nc);
+    TreeBlockSummary tbs(block, {});
 
     TestVisitor v;
 
@@ -94,6 +105,8 @@ BOOST_AUTO_TEST_CASE(visit)
     BOOST_CHECK(v.bv);
     cp.acceptIR(v);
     BOOST_CHECK(v.cp);
+    tbs.acceptIR(v);
+    BOOST_CHECK(v.tbs);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

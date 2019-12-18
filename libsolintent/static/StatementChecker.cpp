@@ -10,6 +10,10 @@
 
 #include <libsolintent/static/StatementChecker.h>
 
+#include <libsolintent/ir/StatementSummary.h>
+
+using namespace std;
+
 namespace dev
 {
 namespace solintent
@@ -17,8 +21,16 @@ namespace solintent
 
 bool StatementChecker::visit(solidity::Block const& _node)
 {
-    (void) _node;
-    throw;
+    vector<SummaryPointer<StatementSummary>> statements;
+
+    statements.reserve(_node.statements().size());
+    for (auto statement : _node.statements())
+    {
+        statements.push_back(check(*statement));
+    }
+
+    write_to_cache(make_shared<TreeBlockSummary>(_node, statements));
+    return false;
 }
 
 bool StatementChecker::visit(solidity::PlaceholderStatement const& _node)

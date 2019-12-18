@@ -12,9 +12,12 @@ set(sources
     ir/IRVisitor.h
     ir/StatementInterface.cpp
     ir/StatementInterface.h
+    ir/StatementSummary.cpp
+    ir/StatementSummary.h
     static/AbstractAnalyzer.h
     static/AbstractExpressionAnalyzer.cpp
     static/AbstractExpressionAnalyzer.h
+    static/AbstractStatementAnalyzer.h
     static/AnalysisEngine.cpp
     static/AnalysisEngine.h
     static/BoundChecker.cpp

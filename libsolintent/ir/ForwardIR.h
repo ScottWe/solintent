@@ -35,6 +35,9 @@ class IRSummary;
 // Base Statement Class.
 class StatementSummary;
 
+// Statement Expressions.
+class TreeBlockSummary;
+
 // -------------------------------------------------------------------------- //
 
 // Base Expression Class.

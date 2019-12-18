@@ -44,6 +44,8 @@ public:
         sizeof...(SolType) > 0,
         "Rejection of every expression type is disallowed."
     );
+    
+    virtual ~AbstractExpressionAnalyzer() = default;
 
     SummaryPointer<ExprType> check(solidity::ASTNode const& _node) override
     {
@@ -87,11 +89,13 @@ using BooleanAnalyzer = AbstractExpressionAnalyzer<
 // -------------------------------------------------------------------------- //
 
 /**
- * Speicalizes the AbstractAnalyzer for any numeric case.
+ * Defines an interface for classes which depend on the BooleanAnalyzer.
  */
-class NumericAnalyzer: public detail::NumericAnalyzer
+class BooleanAnalysisClient
 {
 public:
+    virtual ~BooleanAnalysisClient() = 0;
+
     /**
      * Allows the NumericAnalyzer to access some BooleanAnalyzer.
      * 
@@ -112,11 +116,13 @@ private:
 // -------------------------------------------------------------------------- //
 
 /**
- * Speicalizes the AbstractAnalyzer for any boolean case.
+ * Defines an interface for classes which depend on the NumericAnalyzer.
  */
-class BooleanAnalyzer: public detail::BooleanAnalyzer
+class NumericAnalysisClient
 {
 public:
+    virtual ~NumericAnalysisClient() = 0;
+
     /**
      * Allows the BooleanAnalyzer to access some NumericAnalyzer.
      * 
@@ -132,6 +138,32 @@ protected:
 
 private:
     std::shared_ptr<detail::NumericAnalyzer> m_numeric_analyzer;
+};
+
+// -------------------------------------------------------------------------- //
+
+/**
+ * Speicalizes the AbstractAnalyzer for any numeric case.
+ */
+class NumericAnalyzer
+    : public detail::NumericAnalyzer
+    , public BooleanAnalysisClient
+{
+public:
+    ~NumericAnalyzer() = default;
+};
+
+// -------------------------------------------------------------------------- //
+
+/**
+ * Speicalizes the AbstractAnalyzer for any boolean case.
+ */
+class BooleanAnalyzer
+    : public detail::BooleanAnalyzer
+    , public NumericAnalysisClient
+{
+public:
+    virtual ~BooleanAnalyzer() = default;
 };
 
 // -------------------------------------------------------------------------- //

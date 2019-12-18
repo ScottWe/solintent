@@ -7,6 +7,7 @@
 #include <libsolintent/ir/IRVisitor.h>
 
 #include <libsolintent/ir/ExpressionSummary.h>
+#include <libsolintent/ir/StatementSummary.h>
 
 namespace dev
 {
@@ -43,6 +44,11 @@ void BooleanVariable::acceptIR(IRVisitor & _visitor) const
 }
 
 void Comparison::acceptIR(IRVisitor & _visitor) const
+{
+    _visitor.acceptIR(*this);
+}
+
+void TreeBlockSummary::acceptIR(IRVisitor & _visitor) const
 {
     _visitor.acceptIR(*this);
 }
