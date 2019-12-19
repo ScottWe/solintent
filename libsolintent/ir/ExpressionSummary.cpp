@@ -203,6 +203,11 @@ SummaryPointer<NumericSummary> Comparison::rhs() const
     return m_rhs;
 }
 
+Comparison::Condition Comparison::cond() const
+{
+    return m_cond;
+}
+
 optional<bool> Comparison::exact() const
 {
     // TODO: if desired, some cases can be heuristically resolved.

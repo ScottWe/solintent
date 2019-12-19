@@ -265,6 +265,11 @@ public:
      */
     SummaryPointer<NumericSummary> rhs() const;
 
+    /**
+     * Accessor to the symbol.
+     */
+    Condition cond() const;
+
     void acceptIR(IRVisitor & _visitor) const override;
 
     std::optional<bool> exact() const override;

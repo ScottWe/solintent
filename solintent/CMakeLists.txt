@@ -4,5 +4,7 @@ set(sources
 	main.cpp
 )
 
+add_subdirectory(asserts)
+
 add_executable(solintent ${sources})
 target_link_libraries(solintent PRIVATE solidity Boost::boost Boost::program_options)

@@ -11,11 +11,12 @@ set(sources
     libsolintent/static/StatementCheckerTests.cpp
     libsolintent/util/GenericTest.cpp
     libsolintent/util/SourceLocationTest.cpp
+    solintent/GasConstraintOnLoopsTest.cpp
 )
 
 add_executable(testsuite ${sources} main.cpp)
 target_link_libraries(testsuite
-                      PRIVATE intent libsolc yul solidity yulInterpreter evmasm
-                              devcore Boost::boost Boost::program_options
+                      PRIVATE intent assert libsolc yul solidity yulInterpreter
+                              evmasm devcore Boost::boost Boost::program_options
                               Boost::unit_test_framework evmc
 )
