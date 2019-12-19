@@ -38,15 +38,35 @@ namespace solintent
 
 // -------------------------------------------------------------------------- //
 
-bool AssertionTemplate::isSuspect(solidity::ASTNode const& _node)
+bool AssertionTemplate::isSuspect(
+    solidity::ASTNode const& _node, AbstractAnalysisEngine & _engine
+)
 {
     ScopedSet alarm_drop(m_found_suspect, false);
-    _node.accept(*this);
+
+    // TODO: avoid casts
+    switch (m_type)
+    {
+    case AssertionTemplate::Type::Contract:
+        throw;
+    case AssertionTemplate::Type::Function:
+        throw;
+    case AssertionTemplate::Type::Statement:
+        {
+            auto node = dynamic_cast<solidity::Statement const*>(&_node);
+            _engine.checkStatement(*node)->acceptIR(*this);
+            break;
+        }
+    default:
+        throw runtime_error("Unknown value for type AssertionTemplate::Type.");
+    }
+
     return m_found_suspect;
 }
 
 bool AssertionTemplate::isApplicableTo(solidity::ASTNode const& _node) const
 {
+    // TODO: avoid casts
     solidity::ASTNode const* chk = nullptr;
     switch (m_type)
     {
@@ -142,11 +162,15 @@ void detail::ProgramPattern::aggregate()
 // -------------------------------------------------------------------------- //
 
 ImplicitObligation::ImplicitObligation(
-    string _name, string _desc, shared_ptr<AssertionTemplate> _tmpl
+    string _name,
+    string _desc,
+    shared_ptr<AssertionTemplate> _tmpl,
+    AbstractAnalysisEngine & _engine
 )
-    : m_name(_name)
-    , m_desc(_desc)
-    , m_tmpl(_tmpl)
+    : m_engine(_engine)
+    , m_name(_name)
+    , m_desc(move(_desc))
+    , m_tmpl(move(_tmpl))
 {
 }
 
@@ -166,7 +190,7 @@ void ImplicitObligation::endVisitNode(solidity::ASTNode const& _node)
 {
     if (m_tmpl->isApplicableTo(_node))
     {
-        if (m_tmpl->isSuspect(_node))
+        if (m_tmpl->isSuspect(_node, m_engine))
         {
             m_suspects.push_back(&_node);
         }

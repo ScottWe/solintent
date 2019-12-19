@@ -28,6 +28,8 @@
 
 #include <libsolidity/ast/ASTVisitor.h>
 #include <libsolintent/ir/ExpressionInterface.h>
+#include <libsolintent/ir/IRVisitor.h>
+#include <libsolintent/static/AnalysisEngine.h>
 #include <libsolintent/util/Generic.h>
 #include <cstdint>
 #include <optional>
@@ -47,7 +49,7 @@ namespace solintent
  * can generate a program patch to remove the obligation in future verification.
  * This may resolve (or impose) other obligations.
  */
-class AssertionTemplate: protected solidity::ASTConstVisitor
+class AssertionTemplate: protected IRVisitor
 {
 public:
     /**
@@ -62,8 +64,11 @@ public:
      * true.
      * 
      * _node: the program fragment to inspect
+     * _engine: a lease of the analysis engine to dispatch this node.
      */
-    bool isSuspect(solidity::ASTNode const& _node);
+    bool isSuspect(
+        solidity::ASTNode const& _node, AbstractAnalysisEngine & _engine
+    );
 
     /**
      * Returns true if the rule applies to a given construct.
@@ -217,11 +222,13 @@ public:
      * _name: the name displayed to the user when applying this rule
      * _desc: the information displayed to the user while inspecting this rule
      * _tmpl: a description of the code fragments which raise this obligation
+     * _engine: a configuration used to perform the abduction
      */
     ImplicitObligation(
         std::string _name,
         std::string _desc,
-        std::shared_ptr<AssertionTemplate> _tmpl
+        std::shared_ptr<AssertionTemplate> _tmpl,
+        AbstractAnalysisEngine & _engine
     );
 
     /**
@@ -233,6 +240,8 @@ public:
     );
 
 private:
+    // The engine used to generate all IR.
+    AbstractAnalysisEngine & m_engine;
     // The name of this obligation.
     std::string m_name;
     // A "human-readable" description of this obligation.
