@@ -15,6 +15,7 @@
 #pragma once
 
 #include <libsolintent/static/AbstractExpressionAnalyzer.h>
+#include <libsolintent/static/AbstractStatementAnalyzer.h>
 #include <memory>
 #include <type_traits>
 
@@ -27,6 +28,15 @@ class AbstractAnalysisEngine
 {
 public:
     virtual ~AbstractAnalysisEngine() = 0;
+
+    /**
+     * Exposes the statement analyzer.
+     *
+     * _expr: the input to the Analyzer.
+     */
+    virtual SummaryPointer<StatementSummary> checkStatement(
+        solidity::Statement const& _expr
+    ) = 0;
 
     /**
      * Exposes the numeric analyzer.
@@ -47,7 +57,7 @@ public:
     ) = 0;
 };
 
-template <class NAnalyzer, class BAnalyzer>
+template <class SAnalyzer, class NAnalyzer, class BAnalyzer>
 class AnalysisEngine: public AbstractAnalysisEngine
 {
 public:
@@ -61,6 +71,11 @@ public:
         "A boolean analyzer must conform to the BooleanAnalyzer interface."
     );
 
+    static_assert(
+        std::is_base_of_v<StatementAnalyzer, SAnalyzer>,
+        "A statement analyzer must conform to the StatementAnalyzer interface."
+    );
+
     ~AnalysisEngine() = default;
 
     /**
@@ -69,9 +84,20 @@ public:
     AnalysisEngine()
         : m_numeric_engine(std::make_shared<NAnalyzer>())
         , m_boolean_engine(std::make_shared<BAnalyzer>())
+        , m_statement_engine(std::make_shared<SAnalyzer>())
     {
+        m_statement_engine->setBooleanAnalyzer(m_boolean_engine);
+        m_statement_engine->setNumericAnalyzer(m_numeric_engine);
+
         m_numeric_engine->setBooleanAnalyzer(m_boolean_engine);
         m_boolean_engine->setNumericAnalyzer(m_numeric_engine);
+    }
+
+    SummaryPointer<StatementSummary> checkStatement(
+        solidity::Statement const& _expr
+    ) override
+    {
+        return m_statement_engine->check(_expr);
     }
 
     SummaryPointer<NumericSummary> checkNumeric(
@@ -89,6 +115,7 @@ public:
     }
 
 private:
+    std::shared_ptr<SAnalyzer> m_statement_engine;
     std::shared_ptr<NAnalyzer> m_numeric_engine;
     std::shared_ptr<BAnalyzer> m_boolean_engine;
 };

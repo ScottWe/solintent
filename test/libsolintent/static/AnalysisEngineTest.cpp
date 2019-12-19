@@ -7,6 +7,7 @@
 #include <libsolintent/static/AnalysisEngine.h>
 
 #include <test/CompilerFramework.h>
+#include <libsolintent/static/StatementChecker.h>
 #include <libsolintent/static/BoundChecker.h>
 #include <libsolintent/static/CondChecker.h>
 #include <boost/test/unit_test.hpp>
@@ -35,7 +36,7 @@ BOOST_AUTO_TEST_CASE(literals)
         }
     )";
 
-    AnalysisEngine<BoundChecker, CondChecker> engine;
+    AnalysisEngine<StatementChecker, BoundChecker, CondChecker> engine;
 
     auto const* AST = parse(sourceCode);
     
@@ -58,6 +59,9 @@ BOOST_AUTO_TEST_CASE(literals)
         }
         BOOST_CHECK(res->free().empty());
     }
+
+    auto full = engine.checkStatement(FUNC->body());
+    BOOST_CHECK_NE(full, nullptr);
 }
 
 BOOST_AUTO_TEST_SUITE_END();
