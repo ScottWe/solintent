@@ -67,6 +67,18 @@ bool StatementChecker::visit(solidity::WhileStatement const& _node)
 bool StatementChecker::visit(solidity::ForStatement const& _node)
 {
     // TODO: scan body.
+    SummaryPointer<TreeBlockSummary> body;
+    {
+        auto tmp = check(_node.body());
+        body = dynamic_pointer_cast<TreeBlockSummary const>(tmp);
+        if (!body)
+        {
+            auto const LOC = srclocToStr(_node.location());
+            auto const ERR = "Loop expected TreeBlockSummary from: " + LOC;
+            throw runtime_error(ERR);
+        }
+
+    }
 
     SummaryPointer<BooleanSummary> loopCondition;
     if (_node.condition())
@@ -102,10 +114,11 @@ bool StatementChecker::visit(solidity::ForStatement const& _node)
         }
     }
 
-    write_to_cache(
-        make_shared<LoopSummary>(_node, loopCondition, move(trending))
+    auto loop = make_shared<LoopSummary>(
+        _node, move(loopCondition), move(body), move(trending)
     );
 
+    write_to_cache(move(loop));
     return false;
 }
 

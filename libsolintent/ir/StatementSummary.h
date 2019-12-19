@@ -147,6 +147,7 @@ public:
     LoopSummary(
         solidity::Statement const& _stmt,
         SummaryPointer<BooleanSummary> _termination,
+        SummaryPointer<TreeBlockSummary> _body,
         // TODO: I could define a delta set which lifts the expression...
         std::vector<std::reference_wrapper<TrendingNumeric const>> _delta
     );
@@ -158,6 +159,11 @@ public:
      * TODO: take into acocunt all pathes...
      */
     BooleanSummary const& terminationCondition() const;
+
+    /**
+     * Returns the body of this loop.
+     */
+    TreeBlockSummary const& body() const;
 
     /**
      * Reterns the trends of the condition variables in this loop.
@@ -172,6 +178,7 @@ public:
 
 private:
     SummaryPointer<BooleanSummary> m_termination;
+    SummaryPointer<TreeBlockSummary> m_body;
     std::vector<std::reference_wrapper<TrendingNumeric const>> m_delta;
 };
 

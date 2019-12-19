@@ -148,6 +148,7 @@ BOOST_AUTO_TEST_CASE(simple_loop_stmt)
 
     BOOST_CHECK_EQUAL(exprstmt->deltas().size(), 1);
     BOOST_CHECK_EQUAL(exprstmt->terminationCondition().free().size(), 1);
+    BOOST_CHECK_EQUAL(exprstmt->body().summaryLength(), 1);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

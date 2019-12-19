@@ -43,10 +43,12 @@ SummaryPointer<StatementSummary> TreeBlockSummary::get(size_t i) const
 LoopSummary::LoopSummary(
     solidity::Statement const& _stmt,
     SummaryPointer<BooleanSummary> _termination,
+    SummaryPointer<TreeBlockSummary> _body,
     vector<reference_wrapper<TrendingNumeric const>> _delta
 )
     : StatementSummary(_stmt)
     , m_termination(_termination)
+    , m_body(_body)
     , m_delta(move(_delta))
 {
 }
@@ -54,6 +56,11 @@ LoopSummary::LoopSummary(
 BooleanSummary const& LoopSummary::terminationCondition() const
 {
     return (*m_termination);
+}
+
+TreeBlockSummary const& LoopSummary::body() const
+{
+    return (*m_body);
 }
 
 vector<reference_wrapper<TrendingNumeric const>> const& LoopSummary::deltas(

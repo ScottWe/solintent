@@ -128,8 +128,10 @@ BOOST_AUTO_TEST_CASE(visit)
     auto bc = make_shared<BooleanConstant>(*id, false);
     auto bv = make_shared<BooleanVariable>(*id);
     Comparison cp(*id, Comparison::Condition::LessThan, nc, nc);
-    TreeBlockSummary tbs(*block, {});
-    LoopSummary los(forloop, bv, {});
+    auto tbs = make_shared<TreeBlockSummary>(
+        *block, std::vector<SummaryPointer<StatementSummary>>{}
+    );
+    LoopSummary los(forloop, bv, tbs, {});
     NumericExprStatement nes(*exprstmt, nc);
     BooleanExprStatement bes(*exprstmt, bc);
 
@@ -145,7 +147,7 @@ BOOST_AUTO_TEST_CASE(visit)
     BOOST_CHECK(v.bv);
     cp.acceptIR(v);
     BOOST_CHECK(v.cp);
-    tbs.acceptIR(v);
+    tbs->acceptIR(v);
     BOOST_CHECK(v.tbs);
     los.acceptIR(v);
     BOOST_CHECK(v.los);
