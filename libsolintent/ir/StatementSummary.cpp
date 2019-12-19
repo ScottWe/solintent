@@ -72,5 +72,12 @@ vector<reference_wrapper<TrendingNumeric const>> const& LoopSummary::deltas(
 
 // -------------------------------------------------------------------------- //
 
+FreshVarSummary::FreshVarSummary(solidity::Statement const& _stmt)
+    : StatementSummary(_stmt)
+{
+}
+
+// -------------------------------------------------------------------------- //
+
 }
 }

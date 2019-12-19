@@ -31,12 +31,14 @@ protected:
     void acceptIR(LoopSummary const& _ir) override;
     void acceptIR(NumericExprStatement const& _ir) override;
     void acceptIR(BooleanExprStatement const& _ir) override;
+    void acceptIR(FreshVarSummary const& _ir) override;
 
     void acceptIR(NumericConstant const& _ir) override;
     void acceptIR(NumericVariable const& _ir) override;
     void acceptIR(BooleanConstant const& _ir) override;
     void acceptIR(BooleanVariable const& _ir) override;
     void acceptIR(Comparison const& _ir) override;
+    void acceptIR(PushCall const& _ir) override;
 };
 
 }

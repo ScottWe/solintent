@@ -25,6 +25,17 @@
 
 #include <solintent/CommandLineInterface.h>
 
+#include <solintent/asserts/GasConstraintOnLoops.h>
+
+#include <solintent/patterns/DynamicArraysAsFixedContainers.h>
+
+#include <libsolintent/static/AnalysisEngine.h>
+#include <libsolintent/static/BoundChecker.h>
+#include <libsolintent/static/CondChecker.h>
+#include <libsolintent/static/StatementChecker.h>
+#include <libsolintent/static/ImplicitObligation.h>
+#include <libsolintent/util/SourceLocation.h>
+
 #include <libsolidity/interface/Version.h>
 #include <libsolidity/parsing/Parser.h>
 #include <libsolidity/analysis/NameAndTypeResolver.h>
@@ -631,7 +642,65 @@ bool CommandLineInterface::processInput()
 
 bool CommandLineInterface::actOnInput()
 {
-	// TODO: Handle actions.
+	// Hard-coded analysis engine.
+	AnalysisEngine<StatementChecker, BoundChecker, CondChecker> engine;
+
+	// Hard-coded obligation.
+	auto gas_loop_template = make_shared<GasConstraintOnLoops>();
+	auto daafc_pattern = make_shared<DynamicArraysAsFixedContainers>();
+	ImplicitObligation gas_loop_obligation(
+		"GasConstraintOnLoopObligation",
+		"All loops must consume a finite amount of gas.",
+		gas_loop_template,
+		engine
+	);
+
+
+	// Compilation.
+	vector<solidity::SourceUnit const*> asts;
+	for (auto const& sourceCode: m_sourceCodes)
+	{
+		solidity::SourceUnit const& ast = m_compiler->ast(sourceCode.first);
+		asts.push_back(&ast);
+	}
+
+	// Suspects.
+	auto suspects = gas_loop_obligation.findSuspects(asts);
+	if (!suspects.empty())
+	{
+		sout() << suspects.size() << " suspicious loops detected." << endl;
+		for (auto suspect : suspects)
+		{
+			size_t start = suspect->location().start;
+			size_t end = suspect->location().end;
+			auto const LINE = srclocToStr(suspect->location());
+			sout() << "[" << start << ":" << end << "] " << LINE << endl;
+		}
+	}
+
+	// Solutions
+	sout() << endl << "Beginning candidate search." << endl;
+	for (auto raw : suspects)
+	{
+		// TODO: the obligation should handle this...
+		// TODO: remember contract...
+		auto suspect = dynamic_cast<solidity::Statement const*>(raw);
+		auto solution = daafc_pattern->abductExplanation(
+			*suspect,
+			*solidity::ASTNode::filteredNodes<solidity::ContractDefinition>(
+				asts[0]->nodes()
+			)[0]
+		);
+
+		if (solution.has_value())
+		{
+			size_t start = suspect->location().start;
+			size_t end = suspect->location().end;
+			sout() << "[" << start << ":" << end << "] "
+			       << "Propossed array bound: " << solution.value()
+				   << endl;;
+		}
+	}
 
 	return !m_error;
 }

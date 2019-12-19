@@ -40,6 +40,8 @@ class NumericSummary;
 class TrendingNumeric;
 class NumericConstant;
 class NumericVariable;
+class CallExpression;
+class PushCall;
 
 // Boolean Expressions.
 class BooleanSummary;
@@ -55,6 +57,7 @@ class StatementSummary;
 // Statement Expressions.
 class TreeBlockSummary;
 class LoopSummary;
+class FreshVarSummary;
 namespace detail
 {
 template <class T>

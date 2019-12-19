@@ -159,14 +159,21 @@ bool StatementChecker::visit(solidity::EmitStatement const& _node)
 
 bool StatementChecker::visit(solidity::VariableDeclarationStatement const& _node)
 {
-    (void) _node;
-    throw;
+    // TODO: placeholder
+    write_to_cache(make_shared<FreshVarSummary>(_node));
+    return false;
 }
 
 bool StatementChecker::visit(solidity::ExpressionStatement const& _node)
 {
     SummaryPointer<StatementSummary> stmt;
-    if (getBooleanAnalyzer().matches(_node.expression()))
+    if (auto f = dynamic_cast<solidity::FunctionCall const*>(&_node.expression()))
+    {
+        // TODO: fix
+        auto expr = make_shared<PushCall>(*f);
+        stmt = make_shared<NumericExprStatement>(_node, move(expr));
+    }
+    else if (getBooleanAnalyzer().matches(_node.expression()))
     {
         auto expr = getBooleanAnalyzer().check(_node.expression());
         stmt = make_shared<BooleanExprStatement>(_node, move(expr));
@@ -179,7 +186,7 @@ bool StatementChecker::visit(solidity::ExpressionStatement const& _node)
     else
     {
         auto const LOC = srclocToStr(_node.location());
-        auto const ERR = "ExpressionStatement without matching analyzer:" + LOC;
+        auto const ERR = "ExpressionStatement without matching analyzer: " + LOC;
         throw runtime_error(ERR);
     }
     write_to_cache(move(stmt));

@@ -93,6 +93,10 @@ void GasConstraintOnLoops::acceptIR(BooleanExprStatement const& _ir)
 {
 }
 
+void GasConstraintOnLoops::acceptIR(FreshVarSummary const& _ir)
+{
+}
+
 void GasConstraintOnLoops::acceptIR(NumericConstant const& _ir)
 {
 }
@@ -110,6 +114,10 @@ void GasConstraintOnLoops::acceptIR(BooleanVariable const& _ir)
 }
 
 void GasConstraintOnLoops::acceptIR(Comparison const& _ir)
+{
+}
+
+void GasConstraintOnLoops::acceptIR(PushCall const& _ir)
 {
 }
 

@@ -128,6 +128,31 @@ SummaryPointer<NumericVariable> NumericVariable::makeSharedTrend(
 
 // -------------------------------------------------------------------------- //
 
+PushCall::PushCall(solidity::Expression const& _call)
+    : NumericSummary(_call)
+{
+}
+
+optional<solidity::rational> PushCall::exact() const
+{
+    // TODO
+    return nullopt;
+}
+
+optional<set<ExpressionSummary::Source>> PushCall::tags() const
+{
+    // TODO
+    return nullopt;
+}
+
+set<reference_wrapper<ExpressionSummary const>> PushCall::free() const
+{
+    // TODO
+    return { };
+}
+
+// -------------------------------------------------------------------------- //
+
 BooleanConstant::BooleanConstant(solidity::Expression const& _expr, bool _bool)
     : BooleanSummary(_expr)
     , m_exact(_bool)

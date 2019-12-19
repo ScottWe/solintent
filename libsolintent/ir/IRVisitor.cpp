@@ -70,6 +70,16 @@ void BooleanExprStatement::acceptIR(IRVisitor & _visitor) const
     _visitor.acceptIR(*this);
 }
 
+void FreshVarSummary::acceptIR(IRVisitor & _visitor) const
+{
+    _visitor.acceptIR(*this);
+}
+
+void PushCall::acceptIR(IRVisitor & _visitor) const
+{
+    _visitor.acceptIR(*this);
+}
+
 // -------------------------------------------------------------------------- //
 
 }

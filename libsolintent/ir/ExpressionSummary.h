@@ -170,6 +170,28 @@ private:
     int64_t const m_trend;
 };
 
+/**
+ * TODO
+ */
+class PushCall final: public NumericSummary
+{
+public:
+    /**
+     * TODO
+     */
+    PushCall(solidity::Expression const& _call);
+
+    ~PushCall() = default;
+
+    void acceptIR(IRVisitor & _visitor) const override;
+
+    std::optional<solidity::rational> exact() const override;
+    std::optional<std::set<Source>> tags() const override;
+    std::set<std::reference_wrapper<ExpressionSummary const>> free(
+        /* ... */
+    ) const override;
+};
+
 // -------------------------------------------------------------------------- //
 
 /**

@@ -90,8 +90,20 @@ bool BoundChecker::visit(solidity::BinaryOperation const& _node)
 
 bool BoundChecker::visit(solidity::FunctionCall const& _node)
 {
-    (void) _node;
-    throw;
+    // TODO: no cast?
+    auto const* ftype = dynamic_cast<solidity::FunctionType const*>(
+        _node.expression().annotation().type
+    );
+
+    if (ftype->kind() == solidity::FunctionType::Kind::ArrayPush)
+    {
+        write_to_cache(make_shared<PushCall>(_node));
+        return false;
+    }
+    else
+    {
+        throw;
+    }
 }
 
 bool BoundChecker::visit(solidity::MemberAccess const& _node)

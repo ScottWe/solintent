@@ -49,12 +49,14 @@ public:
     virtual void acceptIR(LoopSummary const& _ir) = 0;
     virtual void acceptIR(NumericExprStatement const& _ir) = 0;
     virtual void acceptIR(BooleanExprStatement const& _ir) = 0;
+    virtual void acceptIR(FreshVarSummary const& _ir) = 0;
 
     virtual void acceptIR(NumericConstant const& _ir) = 0;
     virtual void acceptIR(NumericVariable const& _ir) = 0;
     virtual void acceptIR(BooleanConstant const& _ir) = 0;
     virtual void acceptIR(BooleanVariable const& _ir) = 0;
     virtual void acceptIR(Comparison const& _ir) = 0;
+    virtual void acceptIR(PushCall const& _ir) = 0;
 };
 
 // -------------------------------------------------------------------------- //

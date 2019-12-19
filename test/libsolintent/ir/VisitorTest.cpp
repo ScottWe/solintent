@@ -72,16 +72,28 @@ public:
         nes = true;
     }
 
+    void acceptIR(FreshVarSummary const&) override
+    {
+        fvs = true;
+    }
+
+    void acceptIR(PushCall const&) override
+    {
+        pc = true;
+    }
+
     bool tbs{false};
     bool los{false};
     bool bes{false};
     bool nes{false};
+    bool fvs{false};
 
     bool nc{false};
     bool nv{false};
     bool bc{false};
     bool bv{false};
     bool cp{false};
+    bool pc{false};
 };
 };
 
@@ -134,6 +146,9 @@ BOOST_AUTO_TEST_CASE(visit)
     LoopSummary los(forloop, bv, tbs, {});
     NumericExprStatement nes(*exprstmt, nc);
     BooleanExprStatement bes(*exprstmt, bc);
+    FreshVarSummary fvs(forloop);
+
+    PushCall push(*id);
 
     TestVisitor v;
 
@@ -151,6 +166,8 @@ BOOST_AUTO_TEST_CASE(visit)
     BOOST_CHECK(v.tbs);
     los.acceptIR(v);
     BOOST_CHECK(v.los);
+    fvs.acceptIR(v);
+    BOOST_CHECK(v.fvs);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

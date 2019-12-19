@@ -184,5 +184,23 @@ private:
 
 // -------------------------------------------------------------------------- //
 
+/**
+ * Placeholder for the variable declaration.
+ */
+class FreshVarSummary: public StatementSummary
+{
+public:
+    /**
+     * TODO
+     */
+    FreshVarSummary(solidity::Statement const& _stmt);
+
+    ~FreshVarSummary() = default;
+
+    void acceptIR(IRVisitor & _visitor) const override;
+};
+
+// -------------------------------------------------------------------------- //
+
 }
 }
