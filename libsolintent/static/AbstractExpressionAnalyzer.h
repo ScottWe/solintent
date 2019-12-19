@@ -33,6 +33,8 @@ template <class ExprType, solidity::Type::Category ... SolType>
 class AbstractExpressionAnalyzer: public AbstractAnalyzer<ExprType>
 {
 public:
+    using SummaryT = ExprType;
+
     // This assumes all ExprTypes are ExpressionSummaries.
     static_assert(
         std::is_base_of_v<ExpressionSummary, ExprType>,
@@ -47,6 +49,21 @@ public:
     
     virtual ~AbstractExpressionAnalyzer() = default;
 
+    /**
+     * Returns true if an expression type aligns with the converter.
+     * 
+     * _node: the expression to check.
+     */
+    bool matches(solidity::Expression const& _node)
+    {
+        // Template meta-programming approach to check if the types match.
+        // For types T1, T2, T2, this becomes...
+        //     bool const MATCH = ((TYPE==T1) || ((TYPE==T2) || (TYPE==T1)))
+        auto const TYPE = _node.annotation().type->category();
+        bool const MATCH = (... || (TYPE == SolType));
+        return MATCH;
+    }
+
     SummaryPointer<ExprType> check(solidity::ASTNode const& _node) override
     {
         // TODO: can this be done without a dynamic cast?
@@ -56,12 +73,7 @@ public:
             throw std::runtime_error("_node not of type Expression.");
         }
 
-        // Template meta-programming approach to check if the types match.
-        // For types T1, T2, T2, this becomes...
-        //     bool const MATCH = ((TYPE==T1) || ((TYPE==T2) || (TYPE==T1)))
-        auto const TYPE = expr->annotation().type->category();
-        bool const MATCH = (... || (TYPE == SolType));
-        if (!MATCH)
+        if (!matches(*expr))
         {
             throw std::runtime_error("_node type does not match analyzer.");
         }

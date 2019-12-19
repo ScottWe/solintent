@@ -32,14 +32,6 @@ class IRSummary;
 
 // -------------------------------------------------------------------------- //
 
-// Base Statement Class.
-class StatementSummary;
-
-// Statement Expressions.
-class TreeBlockSummary;
-
-// -------------------------------------------------------------------------- //
-
 // Base Expression Class.
 class ExpressionSummary;
 
@@ -54,6 +46,21 @@ class BooleanSummary;
 class BooleanConstant;
 class BooleanVariable;
 class Comparison;
+
+// -------------------------------------------------------------------------- //
+
+// Base Statement Class.
+class StatementSummary;
+
+// Statement Expressions.
+class TreeBlockSummary;
+namespace detail
+{
+template <class T>
+class ExpressionStatementSummary;
+}
+using NumericExprStatement = detail::ExpressionStatementSummary<NumericSummary>;
+using BooleanExprStatement = detail::ExpressionStatementSummary<BooleanSummary>;
 
 // -------------------------------------------------------------------------- //
 

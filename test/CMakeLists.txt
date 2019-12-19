@@ -2,6 +2,7 @@ set(sources
     CompilerFramework.cpp
     CompilerFramework.h
     libsolintent/ir/ExpressionSummaryTest.cpp
+    libsolintent/ir/StatementSummaryTest.cpp
     libsolintent/ir/VisitorTest.cpp
     libsolintent/static/AnalysisEngineTest.cpp
     libsolintent/static/BoundCheckerTest.cpp

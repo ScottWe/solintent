@@ -11,6 +11,7 @@
 #include <libsolintent/static/StatementChecker.h>
 
 #include <libsolintent/ir/StatementSummary.h>
+#include <libsolintent/util/SourceLocation.h>
 
 using namespace std;
 
@@ -113,8 +114,26 @@ bool StatementChecker::visit(solidity::VariableDeclarationStatement const& _node
 
 bool StatementChecker::visit(solidity::ExpressionStatement const& _node)
 {
-    (void) _node;
-    throw;
+    SummaryPointer<StatementSummary> stmt;
+    if (getBooleanAnalyzer().matches(_node.expression()))
+    {
+        auto expr = getBooleanAnalyzer().check(_node.expression());
+        stmt = make_shared<BooleanExprStatement>(_node, move(expr));
+    }
+    else if (getNumericAnalyzer().matches(_node.expression()))
+    {
+        auto expr = getNumericAnalyzer().check(_node.expression());
+        stmt = make_shared<NumericExprStatement>(_node, move(expr));
+    }
+    else
+    {
+        auto const LOC = srclocToStr(_node.location());
+        auto const ERR = "ExpressionStatement without matching analyzer:" + LOC;
+        throw runtime_error(ERR);
+    }
+    write_to_cache(move(stmt));
+    
+    return false;
 }
 
 }

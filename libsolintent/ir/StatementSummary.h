@@ -14,6 +14,7 @@
 #include <libsolintent/ir/StatementInterface.h>
 #include <libsolintent/ir/ExpressionSummary.h>
 #include <memory>
+#include <type_traits>
 
 namespace dev
 {
@@ -63,6 +64,70 @@ private:
     // Maintains an ordered list of all statements in the block.
     std::vector<SummaryPointer<StatementSummary>> const m_stmts;
 };
+
+// -------------------------------------------------------------------------- //
+
+namespace detail
+{
+
+/**
+ * Defines a general expression statement, so that instances can be generated
+ * which avoid elision of the expression type.
+ * 
+ * ExprT: the type of ExpressionSummary.
+ */
+template <class ExprT>
+class ExpressionStatementSummary: public StatementSummary
+{
+public:
+    // Ensures that ExprT is an ExpressionSummary.
+    static_assert(
+        std::is_base_of_v<ExpressionSummary, ExprT>,
+        "An ExpressionStatementSummary must wrap an ExpressionSummary."
+    );
+
+    virtual ~ExpressionStatementSummary() = default;
+
+    /**
+     * For an ExpressionStatement whose nested expression maps to an ExprT
+     * summary, this constructs a new ExpressionStatementSummary with the
+     * ability to expose its wrapped expression free from type elision.
+     * 
+     * Not that this can allow for any ExpressionSummary type. This gives the
+     * model flexability in choosing the desired ExpressionSummary, should
+     * multiple ExpressionSummary types be applicable to the statement.
+     * 
+     * _stmt: the statement of interest
+     * _wrapped_expr: the ExpressionSummary behind this statement.
+     */
+    ExpressionStatementSummary(
+        solidity::ExpressionStatement const& _stmt,
+        SummaryPointer<ExprT> _wrapped_expr
+    )
+        : StatementSummary(_stmt)
+        , m_wrapped_expr(_wrapped_expr)
+    {
+    }
+
+    /**
+     * Exposes the expression while maintaining its type.
+     */
+    ExprT const& summarize() const
+    {
+        return (*m_wrapped_expr);
+    }
+
+    void acceptIR(IRVisitor & _visitor) const override;
+
+private:
+    // Keeps a reference to the wrapped expression's summary.
+    SummaryPointer<ExprT> const m_wrapped_expr;
+};
+
+}
+
+using NumericExprStatement = detail::ExpressionStatementSummary<NumericSummary>;
+using BooleanExprStatement = detail::ExpressionStatementSummary<BooleanSummary>;
 
 // -------------------------------------------------------------------------- //
 

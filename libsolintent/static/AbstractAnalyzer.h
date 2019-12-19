@@ -41,6 +41,8 @@ public:
         "For interoperability, SummaryType must be of type IRSummary."
     );
 
+    AbstractAnalyzer() = default;
+
     /**
      * Consumes some AST expression of the appropriate type, and determines the
      * given IR encoding of this tree.
@@ -79,6 +81,9 @@ protected:
 private:
     // A cache which is computed on-the-fly for bound estimations.
     std::map<SummaryKey, SummaryPointer<SummaryType>> m_cache;
+
+    AbstractAnalyzer(const AbstractAnalyzer<SummaryType> &);
+    AbstractAnalyzer & operator=(const AbstractAnalyzer<SummaryType> &);
 };
 
 }

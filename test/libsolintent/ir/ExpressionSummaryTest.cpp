@@ -1,7 +1,7 @@
 /**
  * @author Arthur Scott Wesley <aswesley@uwaterloo.ca>
  * @date 2019
- * Tests for libsolintent/static/BoundChecker.cpp.
+ * Tests for libsolintent/ir/ExpressionSummary.h.
  */
 
 #include <libsolintent/ir/ExpressionSummary.h>
@@ -17,7 +17,7 @@ namespace solintent
 namespace test
 {
 
-BOOST_FIXTURE_TEST_SUITE(ExpressionSummarized, CompilerFramework);
+BOOST_FIXTURE_TEST_SUITE(ExpressionSummaries, CompilerFramework);
 
 // -------------------------------------------------------------------------- //
 

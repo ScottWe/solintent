@@ -57,7 +57,19 @@ public:
         tbs = true;
     }
 
+    void acceptIR(BooleanExprStatement const&) override
+    {
+        bes = true;
+    }
+
+    void acceptIR(NumericExprStatement const&) override
+    {
+        nes = true;
+    }
+
     bool tbs{false};
+    bool bes{false};
+    bool nes{false};
 
     bool nc{false};
     bool nv{false};
@@ -79,19 +91,27 @@ BOOST_AUTO_TEST_CASE(visit)
         solidity::Visibility::Public
     );
 
-    solidity::Identifier id(
+    auto id = make_shared<solidity::Identifier>(
         solidity::ASTNode::SourceLocation{}, make_shared<string>("a")
     );
-    id.annotation().referencedDeclaration = (&decl);
+    id->annotation().referencedDeclaration = (&decl);
+
+    solidity::ExpressionStatement exprstmt(
+        solidity::ASTNode::SourceLocation{},
+        nullptr,
+        id
+    );
 
     solidity::Block block(solidity::ASTNode::SourceLocation{}, nullptr, {});
 
-    auto nc = make_shared<NumericConstant>(id, 1);
-    NumericVariable nv(id);
-    BooleanConstant bc(id, false);
-    BooleanVariable bv(id);
-    Comparison cp(id, Comparison::Condition::LessThan, nc, nc);
+    auto nc = make_shared<NumericConstant>(*id, 1);
+    NumericVariable nv(*id);
+    auto bc = make_shared<BooleanConstant>(*id, false);
+    BooleanVariable bv(*id);
+    Comparison cp(*id, Comparison::Condition::LessThan, nc, nc);
     TreeBlockSummary tbs(block, {});
+    NumericExprStatement nes(exprstmt, nc);
+    BooleanExprStatement bes(exprstmt, bc);
 
     TestVisitor v;
 
@@ -99,7 +119,7 @@ BOOST_AUTO_TEST_CASE(visit)
     BOOST_CHECK(v.nc);
     nv.acceptIR(v);
     BOOST_CHECK(v.nv);
-    bc.acceptIR(v);
+    bc->acceptIR(v);
     BOOST_CHECK(v.bc);
     bv.acceptIR(v);
     BOOST_CHECK(v.bv);

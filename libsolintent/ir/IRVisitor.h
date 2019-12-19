@@ -46,6 +46,8 @@ public:
     virtual ~IRVisitor() = 0;
 
     virtual void acceptIR(TreeBlockSummary const& _ir) = 0;
+    virtual void acceptIR(NumericExprStatement const& _ir) = 0;
+    virtual void acceptIR(BooleanExprStatement const& _ir) = 0;
 
     virtual void acceptIR(NumericConstant const& _ir) = 0;
     virtual void acceptIR(NumericVariable const& _ir) = 0;

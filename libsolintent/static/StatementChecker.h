@@ -12,6 +12,7 @@
 
 #include <libsolintent/ir/StatementInterface.h>
 #include <libsolintent/static/AbstractStatementAnalyzer.h>
+#include <memory>
 
 namespace dev
 {
