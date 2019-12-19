@@ -174,10 +174,11 @@ ImplicitObligation::ImplicitObligation(
 {
 }
 
-vector<solidity::ASTNode const*> ImplicitObligation::findSuspects(
+vector<ImplicitObligation::Suspect> ImplicitObligation::findSuspects(
     vector<solidity::SourceUnit const*> const& _fullprog
 )
 {
+    m_context = nullptr;
     m_suspects.clear();
     for (auto const* unit : _fullprog)
     {
@@ -192,9 +193,15 @@ void ImplicitObligation::endVisitNode(solidity::ASTNode const& _node)
     {
         if (m_tmpl->isSuspect(_node, m_engine))
         {
-            m_suspects.push_back(&_node);
+            m_suspects.push_back({m_context, &_node});
         }
     }
+}
+
+bool ImplicitObligation::visit(solidity::ContractDefinition const& _node)
+{
+    m_context = (&_node);
+    return true;
 }
 
 // -------------------------------------------------------------------------- //

@@ -671,31 +671,28 @@ bool CommandLineInterface::actOnInput()
 		sout() << suspects.size() << " suspicious loops detected." << endl;
 		for (auto suspect : suspects)
 		{
-			size_t start = suspect->location().start;
-			size_t end = suspect->location().end;
-			auto const LINE = srclocToStr(suspect->location());
+			size_t start = suspect.statement->location().start;
+			size_t end = suspect.statement->location().end;
+			auto const LINE = srclocToStr(suspect.statement->location());
 			sout() << "[" << start << ":" << end << "] " << LINE << endl;
 		}
 	}
 
 	// Solutions
 	sout() << endl << "Beginning candidate search." << endl;
-	for (auto raw : suspects)
+	for (auto suspect : suspects)
 	{
 		// TODO: the obligation should handle this...
 		// TODO: remember contract...
-		auto suspect = dynamic_cast<solidity::Statement const*>(raw);
+		auto statement = dynamic_cast<solidity::Statement const*>(suspect.statement);
 		auto solution = daafc_pattern->abductExplanation(
-			*suspect,
-			*solidity::ASTNode::filteredNodes<solidity::ContractDefinition>(
-				asts[0]->nodes()
-			)[0]
+			*statement, *suspect.contract
 		);
 
 		if (solution.has_value())
 		{
-			size_t start = suspect->location().start;
-			size_t end = suspect->location().end;
+			size_t start = statement->location().start;
+			size_t end = statement->location().end;
 			sout() << "[" << start << ":" << end << "] "
 			       << "Propossed array bound: " << solution.value()
 				   << endl;;

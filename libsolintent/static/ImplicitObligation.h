@@ -232,10 +232,19 @@ public:
     );
 
     /**
+     * Represents a suspect and its source unit.
+     */
+    struct Suspect
+    {
+        solidity::ContractDefinition const* contract;
+        solidity::ASTNode const* statement;
+    };
+
+    /**
      * Using the assertion templates, this will generate a list of suspicious
      * statements. These are implicit obligations which must be dispatched.
      */
-    std::vector<solidity::ASTNode const*> findSuspects(
+    std::vector<Suspect> findSuspects(
         std::vector<solidity::SourceUnit const*> const& _fullprog
     );
 
@@ -249,9 +258,13 @@ private:
     // The template used to nominate and elect assertion candidates.
     std::shared_ptr<AssertionTemplate> m_tmpl;
     // The current set of candidate suspects.
-    std::vector<solidity::ASTNode const*> m_suspects;
+    std::vector<Suspect> m_suspects;
+    // The contract under inspection.
+    solidity::ContractDefinition const* m_context;
 
     void endVisitNode(solidity::ASTNode const& _node) override;
+
+    bool visit(solidity::ContractDefinition const& _node) override;
 };
 
 // -------------------------------------------------------------------------- //

@@ -48,6 +48,7 @@ public:
     void acceptIR(LoopSummary const& _ir) override {}
     void acceptIR(BooleanExprStatement const& _ir) override {}
     void acceptIR(FreshVarSummary const& _ir) override {}
+    void acceptIR(PushCall const& _ir) override {}
 
     void acceptIR(NumericConstant const& _ir) override {}
     void acceptIR(NumericVariable const& _ir) override {}
