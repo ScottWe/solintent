@@ -57,6 +57,11 @@ public:
         tbs = true;
     }
 
+    void acceptIR(LoopSummary const&) override
+    {
+        los = true;
+    }
+
     void acceptIR(BooleanExprStatement const&) override
     {
         bes = true;
@@ -68,6 +73,7 @@ public:
     }
 
     bool tbs{false};
+    bool los{false};
     bool bes{false};
     bool nes{false};
 
@@ -96,22 +102,36 @@ BOOST_AUTO_TEST_CASE(visit)
     );
     id->annotation().referencedDeclaration = (&decl);
 
-    solidity::ExpressionStatement exprstmt(
+    auto exprstmt = make_shared<solidity::ExpressionStatement>(
         solidity::ASTNode::SourceLocation{},
         nullptr,
         id
     );
 
-    solidity::Block block(solidity::ASTNode::SourceLocation{}, nullptr, {});
+    auto block = make_shared<solidity::Block>(
+        solidity::ASTNode::SourceLocation{},
+        nullptr,
+        vector<solidity::ASTPointer<solidity::Statement>>{}
+    );
+
+    solidity::ForStatement forloop(
+        solidity::ASTNode::SourceLocation{},
+        nullptr,
+        nullptr,
+        nullptr,
+        exprstmt,
+        block
+    );
 
     auto nc = make_shared<NumericConstant>(*id, 1);
     NumericVariable nv(*id);
     auto bc = make_shared<BooleanConstant>(*id, false);
-    BooleanVariable bv(*id);
+    auto bv = make_shared<BooleanVariable>(*id);
     Comparison cp(*id, Comparison::Condition::LessThan, nc, nc);
-    TreeBlockSummary tbs(block, {});
-    NumericExprStatement nes(exprstmt, nc);
-    BooleanExprStatement bes(exprstmt, bc);
+    TreeBlockSummary tbs(*block, {});
+    LoopSummary los(forloop, bv, {});
+    NumericExprStatement nes(*exprstmt, nc);
+    BooleanExprStatement bes(*exprstmt, bc);
 
     TestVisitor v;
 
@@ -121,12 +141,14 @@ BOOST_AUTO_TEST_CASE(visit)
     BOOST_CHECK(v.nv);
     bc->acceptIR(v);
     BOOST_CHECK(v.bc);
-    bv.acceptIR(v);
+    bv->acceptIR(v);
     BOOST_CHECK(v.bv);
     cp.acceptIR(v);
     BOOST_CHECK(v.cp);
     tbs.acceptIR(v);
     BOOST_CHECK(v.tbs);
+    los.acceptIR(v);
+    BOOST_CHECK(v.los);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

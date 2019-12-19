@@ -54,6 +54,7 @@ class StatementSummary;
 
 // Statement Expressions.
 class TreeBlockSummary;
+class LoopSummary;
 namespace detail
 {
 template <class T>

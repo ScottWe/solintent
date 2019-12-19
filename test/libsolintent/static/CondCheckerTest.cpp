@@ -180,6 +180,41 @@ BOOST_AUTO_TEST_CASE(const_compare)
     }
 }
 
+BOOST_AUTO_TEST_CASE(compare_and_free)
+{
+    char const* sourceCode = R"(
+        contract A {
+            int a;
+            int b;
+            function f() public view {
+                5 < 4;
+                a < 4;
+                a < b;
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK_EQUAL(FUNC->body().statements().size(), 3);
+
+    auto b = make_shared<BoundChecker>();
+    CondChecker c;
+    c.setNumericAnalyzer(b);
+
+    for (size_t i = 0; i < 3; ++i)
+    {
+        auto const* EXPR = (FUNC->body().statements()[i]).get();
+        auto stmt = dynamic_cast<solidity::ExpressionStatement const*>(EXPR);
+        auto res = c.check(stmt->expression());
+        BOOST_CHECK_EQUAL(res->free().size(), i);
+    }
+}
+
 BOOST_AUTO_TEST_SUITE_END();
 
 }

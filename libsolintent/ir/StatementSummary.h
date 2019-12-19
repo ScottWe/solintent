@@ -131,5 +131,51 @@ using BooleanExprStatement = detail::ExpressionStatementSummary<BooleanSummary>;
 
 // -------------------------------------------------------------------------- //
 
+/**
+ * In Solidity, there are for loops and while loops. For loops are endowed with
+ * an initialization statement, and a loop statement. Both loops have a
+ * termination condition. To analyze a loop, all that matters is the termination
+ * condition and the change in the loop. This interface lifts all loops in such
+ * a manner.
+ */
+class LoopSummary: public StatementSummary
+{
+public:
+    /**
+     * TODO
+     */
+    LoopSummary(
+        solidity::Statement const& _stmt,
+        SummaryPointer<BooleanSummary> _termination,
+        // TODO: I could define a delta set which lifts the expression...
+        std::vector<std::reference_wrapper<TrendingNumeric const>> _delta
+    );
+
+    ~LoopSummary() = default;
+
+    /**
+     * Returns the termination condition for this loop.
+     * TODO: take into acocunt all pathes...
+     */
+    BooleanSummary const& terminationCondition() const;
+
+    /**
+     * Reterns the trends of the condition variables in this loop.
+     * TODO: take into account internal mutation... this is neither sound nor
+     *       complete... ie, `for(; ; ++i) { --i; }`.
+     */
+    std::vector<std::reference_wrapper<TrendingNumeric const>> const& deltas(
+        /* ... */
+    ) const;
+
+    void acceptIR(IRVisitor & _visitor) const override;
+
+private:
+    SummaryPointer<BooleanSummary> m_termination;
+    std::vector<std::reference_wrapper<TrendingNumeric const>> m_delta;
+};
+
+// -------------------------------------------------------------------------- //
+
 }
 }

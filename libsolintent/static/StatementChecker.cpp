@@ -66,8 +66,47 @@ bool StatementChecker::visit(solidity::WhileStatement const& _node)
 
 bool StatementChecker::visit(solidity::ForStatement const& _node)
 {
-    (void) _node;
-    throw;
+    // TODO: scan body.
+
+    SummaryPointer<BooleanSummary> loopCondition;
+    if (_node.condition())
+    {
+        loopCondition = getBooleanAnalyzer().check(*_node.condition());
+    }
+    else
+    {
+        auto const LOC = srclocToStr(_node.location());
+        throw runtime_error("Loop condition expected: " + LOC);
+    }
+
+    vector<reference_wrapper<TrendingNumeric const>> trending;
+    if (_node.loopExpression())
+    {
+        // TODO: no dynamic casts would be best.
+        auto tmp = check(*_node.loopExpression());
+        auto change = dynamic_pointer_cast<NumericExprStatement const>(tmp);
+
+        if (!change)
+        {
+            auto const LOC = srclocToStr(_node.location());
+            auto const ERR = "Loop expected NumericSummary from: " + LOC;
+            throw runtime_error(ERR);
+        }
+
+        for (auto var : change->summarize().free())
+        {
+            if (auto trend = dynamic_cast<TrendingNumeric const*>(&var.get()))
+            {
+                trending.push_back(*trend);
+            }
+        }
+    }
+
+    write_to_cache(
+        make_shared<LoopSummary>(_node, loopCondition, move(trending))
+    );
+
+    return false;
 }
 
 bool StatementChecker::visit(solidity::Continue const& _node)
@@ -102,8 +141,7 @@ bool StatementChecker::visit(solidity::Throw const& _node)
 
 bool StatementChecker::visit(solidity::EmitStatement const& _node)
 {
-    (void) _node;
-    throw;
+    return false;
 }
 
 bool StatementChecker::visit(solidity::VariableDeclarationStatement const& _node)

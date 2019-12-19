@@ -111,6 +111,45 @@ BOOST_AUTO_TEST_CASE(bool_expr_stmt)
     BOOST_CHECK_EQUAL((&exprstmt->summarize().expr()), (&STMT.expression()));
 }
 
+BOOST_AUTO_TEST_CASE(simple_loop_stmt)
+{
+    char const* sourceCode = R"(
+        contract A {
+            function f() public view {
+                for (uint i = 0; i < 5; ++i) {
+                    { }
+                }
+            }
+        }
+    )";
+
+    auto const* AST = parse(sourceCode);
+    
+    auto const* CONTRACT = fetch("A");
+    BOOST_CHECK(!CONTRACT->definedFunctions().empty());
+
+    auto const* FUNC = CONTRACT->definedFunctions()[0];
+    BOOST_CHECK(!FUNC->body().statements().empty());
+
+    auto const& STMT = dynamic_cast<solidity::ForStatement const&>(
+        *FUNC->body().statements()[0].get()
+    );
+    
+    StatementChecker s;
+    auto b = make_shared<BoundChecker>();
+    auto c = make_shared<CondChecker>();
+    s.setNumericAnalyzer(b);
+    s.setBooleanAnalyzer(c);
+    c->setNumericAnalyzer(b);
+    auto summary = s.check(STMT);
+
+    auto exprstmt = dynamic_pointer_cast<LoopSummary const>(summary);
+    BOOST_CHECK(exprstmt);
+
+    BOOST_CHECK_EQUAL(exprstmt->deltas().size(), 1);
+    BOOST_CHECK_EQUAL(exprstmt->terminationCondition().free().size(), 1);
+}
+
 BOOST_AUTO_TEST_SUITE_END();
 
 }

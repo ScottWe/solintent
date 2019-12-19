@@ -53,6 +53,11 @@ void TreeBlockSummary::acceptIR(IRVisitor & _visitor) const
     _visitor.acceptIR(*this);
 }
 
+void LoopSummary::acceptIR(IRVisitor & _visitor) const
+{
+    _visitor.acceptIR(*this);
+}
+
 template <>
 void NumericExprStatement::acceptIR(IRVisitor & _visitor) const
 {
