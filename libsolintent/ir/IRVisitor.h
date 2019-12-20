@@ -45,6 +45,9 @@ class IRVisitor
 public:
     virtual ~IRVisitor() = 0;
 
+    virtual void acceptIR(ContractSummary const& _ir) = 0;
+    virtual void acceptIR(FunctionSummary const& _ir) = 0;
+
     virtual void acceptIR(TreeBlockSummary const& _ir) = 0;
     virtual void acceptIR(LoopSummary const& _ir) = 0;
     virtual void acceptIR(NumericExprStatement const& _ir) = 0;

@@ -31,7 +31,17 @@ GasConstraintOnLoops::GasConstraintOnLoops()
 
 // -------------------------------------------------------------------------- //
 
-void GasConstraintOnLoops::acceptIR(TreeBlockSummary const& _ir) { }
+void GasConstraintOnLoops::acceptIR(ContractSummary const& _ir)
+{
+}
+
+void GasConstraintOnLoops::acceptIR(FunctionSummary const& _ir)
+{
+}
+
+void GasConstraintOnLoops::acceptIR(TreeBlockSummary const& _ir)
+{
+}
 
 void GasConstraintOnLoops::acceptIR(LoopSummary const& _ir)
 {

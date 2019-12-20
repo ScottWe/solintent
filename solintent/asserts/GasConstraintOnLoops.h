@@ -27,6 +27,9 @@ public:
     ~GasConstraintOnLoops() = default;
 
 protected:
+    void acceptIR(ContractSummary const& _ir) override;
+    void acceptIR(FunctionSummary const& _ir) override;
+
     void acceptIR(TreeBlockSummary const& _ir) override;
     void acceptIR(LoopSummary const& _ir) override;
     void acceptIR(NumericExprStatement const& _ir) override;

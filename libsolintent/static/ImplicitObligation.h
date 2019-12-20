@@ -192,18 +192,13 @@ public:
     }
 
 protected:
-    // Statement obligatons.
+    virtual void setObligation(ContractSummary const&) {}
+    virtual void setObligation(FunctionSummary const&) {}
     virtual void setObligation(TreeBlockSummary const&) {}
     virtual void setObligation(LoopSummary const& _ir) {}
     virtual void setObligation(NumericExprStatement const&) {}
     virtual void setObligation(BooleanExprStatement const&) {}
     virtual void setObligation(FreshVarSummary const&) {}
-
-    // Function obligations.
-    // ...
-
-    // Contract obligations.
-    // ...
 
 private:
     // Hides the solution raw data from concrete implementations.
@@ -224,6 +219,9 @@ private:
             setObligation(_ir);
         }
     }
+
+    void acceptIR(ContractSummary const& _ir) { dispatchIR(_ir); }
+    void acceptIR(FunctionSummary const& _ir) { dispatchIR(_ir); }
 
     void acceptIR(TreeBlockSummary const& _ir) { dispatchIR(_ir); }
     void acceptIR(LoopSummary const& _ir) { dispatchIR(_ir); }

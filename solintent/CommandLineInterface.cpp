@@ -32,6 +32,8 @@
 #include <libsolintent/static/AnalysisEngine.h>
 #include <libsolintent/static/BoundChecker.h>
 #include <libsolintent/static/CondChecker.h>
+#include <libsolintent/static/ContractChecker.h>
+#include <libsolintent/static/FunctionChecker.h>
 #include <libsolintent/static/StatementChecker.h>
 #include <libsolintent/static/ImplicitObligation.h>
 #include <libsolintent/util/SourceLocation.h>
@@ -643,7 +645,13 @@ bool CommandLineInterface::processInput()
 bool CommandLineInterface::actOnInput()
 {
 	// Hard-coded analysis engine.
-	AnalysisEngine<StatementChecker, BoundChecker, CondChecker> engine;
+	AnalysisEngine<
+		ContractChecker,
+		FunctionChecker,
+		StatementChecker,
+		BoundChecker,
+		CondChecker
+	> engine;
 
 	// Hard-coded obligation.
 	auto gas_loop_template = make_shared<GasConstraintOnLoops>();

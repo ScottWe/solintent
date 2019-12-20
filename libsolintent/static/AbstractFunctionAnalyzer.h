@@ -1,14 +1,15 @@
 /**
  * @author Arthur Scott Wesley <aswesley@uwaterloo.ca>
  * @date 2019
- * Specializes the AbstractAnalyzer to statements.
+ * Specializes the AbstractAnalyzer to functions.
  */
 
 #pragma once
 
-#include <libsolintent/ir/StatementInterface.h>
+#include <libsolintent/ir/StructuralSummary.h>
 #include <libsolintent/static/AbstractAnalyzer.h>
 #include <libsolintent/static/AbstractExpressionAnalyzer.h>
+#include <libsolintent/static/AbstractStatementAnalyzer.h>
 #include <memory>
 
 namespace dev
@@ -19,43 +20,43 @@ namespace solintent
 // -------------------------------------------------------------------------- //
 
 /**
- * Speicalizes the AbstractAnalyzer for the case of any statement.
- * TODO: this should be specialized... assignment, cfg, etc
+ * Speicalizes the AbstractAnalyzer for the case of any function.
  */
-class StatementAnalyzer
-	: public AbstractAnalyzer<StatementSummary>
+class FunctionAnalyzer
+	: public AbstractAnalyzer<FunctionSummary>
     , public NumericAnalysisClient
     , public BooleanAnalysisClient
+    , public StatementAnalysisClient
 {
 public:
-    ~StatementAnalyzer() = default;
+    ~FunctionAnalyzer() = default;
 };
 
 // -------------------------------------------------------------------------- //
 
 /**
- * Defines an interface for classes which depend on the StatementAnalyzer.
+ * Defines an interface for classes which depend on the FunctionAnalyzer.
  */
-class StatementAnalysisClient
+class FunctionAnalysisClient
 {
 public:
-    virtual ~StatementAnalysisClient() = 0;
+    virtual ~FunctionAnalysisClient() = 0;
 
     /**
      * Allows the BooleanAnalyzer to access some NumericAnalyzer.
      * 
      * _analyzer: the NumericAnalyzer used to resolve rational expressions.
      */
-    void setStatementAnalyzer(std::shared_ptr<StatementAnalyzer> _analyzer);
+    void setFunctionAnalyzer(std::shared_ptr<FunctionAnalyzer> _analyzer);
 
 protected:
     /**
      * Returns the current NumericAnalyzer, or otherwise raises an exception.
      */
-    StatementAnalyzer & getStatementAnalyzer();
+    FunctionAnalyzer & getFunctionAnalyzer();
 
 private:
-    std::shared_ptr<StatementAnalyzer> m_statement_analyzer;
+    std::shared_ptr<FunctionAnalyzer> m_function_analyzer;
 };
 
 // -------------------------------------------------------------------------- //

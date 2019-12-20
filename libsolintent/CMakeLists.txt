@@ -1,6 +1,4 @@
 set(sources
-    ir/ContractInterface.cpp
-    ir/ContractInterface.h
     ir/ExpressionInterface.cpp
     ir/ExpressionInterface.h
     ir/ExpressionSummary.cpp
@@ -14,10 +12,15 @@ set(sources
     ir/StatementInterface.h
     ir/StatementSummary.cpp
     ir/StatementSummary.h
+    ir/StructuralSummary.h
     static/AbstractAnalyzer.h
+    static/AbstractContractAnalyzer.h
     static/AbstractExpressionAnalyzer.cpp
     static/AbstractExpressionAnalyzer.h
+    static/AbstractFunctionAnalyzer.cpp
+    static/AbstractFunctionAnalyzer.h
     static/AbstractStatementAnalyzer.h
+    static/AbstractStatementAnalyzer.cpp
     static/AnalysisEngine.cpp
     static/AnalysisEngine.h
     static/BoundChecker.cpp

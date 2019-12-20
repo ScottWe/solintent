@@ -10,15 +10,14 @@
 
 #pragma once
 
-#include <libsolintent/ir/FunctionInterface.h>
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractFunctionAnalyzer.h>
 
 namespace dev
 {
 namespace solintent
 {
 
-class FunctionChecker: public AbstractAnalyzer<FunctionSummary>
+class FunctionChecker: public FunctionAnalyzer
 {
 protected:
 	bool visit(solidity::FunctionDefinition const& _node) override;

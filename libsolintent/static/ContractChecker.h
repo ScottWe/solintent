@@ -10,15 +10,14 @@
 
 #pragma once
 
-#include <libsolintent/ir/ContractInterface.h>
-#include <libsolintent/static/AbstractAnalyzer.h>
+#include <libsolintent/static/AbstractContractAnalyzer.h>
 
 namespace dev
 {
 namespace solintent
 {
 
-class ContractChecker: public AbstractAnalyzer<ContractSummary>
+class ContractChecker: public ContractAnalyzer
 {
 protected:
 	bool visit(solidity::ContractDefinition const& _node) override;
