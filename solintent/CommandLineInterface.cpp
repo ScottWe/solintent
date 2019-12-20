@@ -665,7 +665,8 @@ bool CommandLineInterface::actOnInput()
 	}
 
 	// Suspects.
-	auto suspects = gas_loop_obligation.findSuspects(asts);
+	gas_loop_obligation.computeSuspects(asts);
+	auto suspects = gas_loop_obligation.findSuspects();
 	if (!suspects.empty())
 	{
 		sout() << suspects.size() << " suspicious loops detected." << endl;

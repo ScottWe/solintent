@@ -211,6 +211,15 @@ using StatementPattern = detail::SpecializedPattern<solidity::Statement>;
 
 /**
  * The ImplicitObligation, as described in the file header.
+ * 
+ * Expected usage:
+ * 1. Initially there are no suspects.
+ * 2. A call to findSuspects will (re)populate the suspects.
+ * 3. A call to getSuspects will return the results of the last findSuspects
+ * 4. A call to findCandidates will compute candidate proofs given the current
+ *    set of suspects.
+ * 5. TODO: adding obligations.
+ * 6. TODO: finding candidates.
  */
 class ImplicitObligation: private solidity::ASTConstVisitor
 {
@@ -243,10 +252,24 @@ public:
     /**
      * Using the assertion templates, this will generate a list of suspicious
      * statements. These are implicit obligations which must be dispatched.
+     * 
+     * _fullprog: the suspect generation is relative to these source units.
+     * 
+     * Note: if  a subset of source units are given, say {A, B, C} from set
+     *       {A, B, C, D, E}, and A references E, then some nodes from E may
+     *       indirectly impact the analysis. This happens if the context-
+     *       sensitive analysis performed by Solidity creates a reference from A
+     *       to E in some way.
      */
-    std::vector<Suspect> findSuspects(
+    void computeSuspects(
         std::vector<solidity::SourceUnit const*> const& _fullprog
     );
+
+    /**
+     * Using the assertion templates, this will generate a list of suspicious
+     * statements. These are implicit obligations which must be dispatched.
+     */
+    std::vector<Suspect> findSuspects() const;
 
 private:
     // The engine used to generate all IR.

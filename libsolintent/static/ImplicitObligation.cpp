@@ -174,16 +174,20 @@ ImplicitObligation::ImplicitObligation(
 {
 }
 
-vector<ImplicitObligation::Suspect> ImplicitObligation::findSuspects(
+void ImplicitObligation::computeSuspects(
     vector<solidity::SourceUnit const*> const& _fullprog
 )
 {
-    m_context = nullptr;
     m_suspects.clear();
+    m_context = nullptr;
     for (auto const* unit : _fullprog)
     {
         unit->accept(*this);
     }
+}
+
+vector<ImplicitObligation::Suspect> ImplicitObligation::findSuspects() const
+{
     return m_suspects;
 }
 
