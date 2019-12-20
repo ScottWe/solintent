@@ -118,7 +118,7 @@ detail::ProgramPattern::~ProgramPattern()
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    solidity::ContractDefinition const& _obligation,
+    ContractSummary const& _obligation,
     solidity::ContractDefinition const& _locality
 )
 {
@@ -126,7 +126,7 @@ optional<int64_t> detail::ProgramPattern::abductExplanation(
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    solidity::FunctionDefinition const& _obligation,
+    FunctionSummary const& _obligation,
     solidity::ContractDefinition const& _locality
 )
 {
@@ -134,7 +134,7 @@ optional<int64_t> detail::ProgramPattern::abductExplanation(
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    solidity::Statement const& _obligation,
+    StatementSummary const& _obligation,
     solidity::ContractDefinition const& _locality
 )
 {

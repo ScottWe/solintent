@@ -672,9 +672,9 @@ bool CommandLineInterface::actOnInput()
 		sout() << suspects.size() << " suspicious loops detected." << endl;
 		for (auto suspect : suspects)
 		{
-			size_t start = suspect.statement->location().start;
-			size_t end = suspect.statement->location().end;
-			auto const LINE = srclocToStr(suspect.statement->location());
+			size_t start = suspect.node->location().start;
+			size_t end = suspect.node->location().end;
+			auto const LINE = srclocToStr(suspect.node->location());
 			sout() << "[" << start << ":" << end << "] " << LINE << endl;
 		}
 	}
@@ -685,9 +685,10 @@ bool CommandLineInterface::actOnInput()
 	{
 		// TODO: the obligation should handle this...
 		// TODO: remember contract...
-		auto statement = dynamic_cast<solidity::Statement const*>(suspect.statement);
+		auto statement = dynamic_cast<solidity::Statement const*>(suspect.node);
+		auto summary = engine.checkStatement(*statement);
 		auto solution = daafc_pattern->abductExplanation(
-			*statement, *suspect.contract
+			*summary, *suspect.contract
 		);
 
 		if (solution.has_value())

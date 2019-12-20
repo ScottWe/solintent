@@ -29,7 +29,7 @@ void DynamicArraysAsFixedContainers::aggregate()
 bool DynamicArraysAsFixedContainers::visit(solidity::FunctionCall const& _node)
 {
     // TODO... use the right format... also no casts...
-    auto stmt = dynamic_cast<solidity::ForStatement const*>(&activeObligation());
+    auto stmt = dynamic_cast<solidity::ForStatement const*>(&activeObligation().expr());
     auto expr = dynamic_cast<solidity::UnaryOperation const*>(&stmt->loopExpression()->expression());
     auto nvar = dynamic_cast<solidity::Identifier const*>(&expr->subExpression());
 

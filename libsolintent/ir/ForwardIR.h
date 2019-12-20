@@ -68,5 +68,15 @@ using BooleanExprStatement = detail::ExpressionStatementSummary<BooleanSummary>;
 
 // -------------------------------------------------------------------------- //
 
+// Base Function Class.
+class FunctionSummary;
+
+// -------------------------------------------------------------------------- //
+
+// Base Contract Class.
+class ContractSummary;
+
+// -------------------------------------------------------------------------- //
+
 }
 }

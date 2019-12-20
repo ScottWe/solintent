@@ -120,15 +120,15 @@ public:
      * _locality: the contract on which the obligation was generated
      */
     virtual std::optional<int64_t> abductExplanation(
-        solidity::ContractDefinition const& _obligation,
+        ContractSummary const& _obligation,
         solidity::ContractDefinition const& _locality
     );
     virtual std::optional<int64_t> abductExplanation(
-        solidity::FunctionDefinition const& _obligation,
+        FunctionSummary const& _obligation,
         solidity::ContractDefinition const& _locality
     );
     virtual std::optional<int64_t> abductExplanation(
-        solidity::Statement const& _obligation,
+        StatementSummary const& _obligation,
         solidity::ContractDefinition const& _locality
     );
 
@@ -157,7 +157,7 @@ protected:
      * Returns the active obligation. This should be specialized to the actual
      * obligation type.
      */
-    virtual solidity::ASTNode const& activeObligation() const = 0;
+    virtual IRSummary const& activeObligation() const = 0;
 
 public:
     // The aducted solution.
@@ -203,9 +203,9 @@ private:
 };
 }
 
-using ContractPattern = detail::SpecializedPattern<solidity::ContractDefinition>;
-using FunctionPattern = detail::SpecializedPattern<solidity::FunctionDefinition>;
-using StatementPattern = detail::SpecializedPattern<solidity::Statement>;
+using ContractPattern = detail::SpecializedPattern<ContractSummary>;
+using FunctionPattern = detail::SpecializedPattern<FunctionSummary>;
+using StatementPattern = detail::SpecializedPattern<StatementSummary>;
 
 // -------------------------------------------------------------------------- //
 
@@ -246,7 +246,7 @@ public:
     struct Suspect
     {
         solidity::ContractDefinition const* contract;
-        solidity::ASTNode const* statement;
+        solidity::ASTNode const* node;
     };
 
     /**
