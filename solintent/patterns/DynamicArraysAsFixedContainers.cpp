@@ -11,6 +11,8 @@
 
 #include <solintent/patterns/DynamicArraysAsFixedContainers.h>
 
+#include <libsolintent/ir/StatementSummary.h>
+
 namespace dev
 {
 namespace solintent
@@ -26,10 +28,25 @@ void DynamicArraysAsFixedContainers::aggregate()
 
 // -------------------------------------------------------------------------- //
 
+void DynamicArraysAsFixedContainers::clearObligation()
+{
+    m_obligation = nullptr;
+}
+
+// -------------------------------------------------------------------------- //
+
+void DynamicArraysAsFixedContainers::setObligation(LoopSummary const& _ir)
+{
+    // TODO: preprocessing could be nice
+    m_obligation = (&_ir);
+}
+
+// -------------------------------------------------------------------------- //
+
 bool DynamicArraysAsFixedContainers::visit(solidity::FunctionCall const& _node)
 {
     // TODO... use the right format... also no casts...
-    auto stmt = dynamic_cast<solidity::ForStatement const*>(&activeObligation().expr());
+    auto stmt = dynamic_cast<solidity::ForStatement const*>(&m_obligation->expr());
     auto expr = dynamic_cast<solidity::UnaryOperation const*>(&stmt->loopExpression()->expression());
     auto nvar = dynamic_cast<solidity::Identifier const*>(&expr->subExpression());
 

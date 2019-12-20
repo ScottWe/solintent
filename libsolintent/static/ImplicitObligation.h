@@ -154,10 +154,9 @@ protected:
     virtual void aggregate();
 
     /**
-     * Returns the active obligation. This should be specialized to the actual
-     * obligation type.
+     * Forces the pattern to clear its old obligation.
      */
-    virtual IRSummary const& activeObligation() const = 0;
+    virtual void clearObligation() = 0;
 
 public:
     // The aducted solution.
@@ -169,16 +168,20 @@ public:
  * obligation. This works, as there is a single structure, which only vary in
  * parameter type.
  */
-template <typename T>
-class SpecializedPattern: public ProgramPattern
+template <typename SummaryT>
+class SpecializedPattern: public ProgramPattern, private IRVisitor
 {
 public:
     std::optional<int64_t> abductExplanation(
-        T const& _obligation, solidity::ContractDefinition const& _locality
+        SummaryT const& _obligation,
+        solidity::ContractDefinition const& _locality
     ) override
     {
-        ScopedSet obligationGuard(m_active_obligation, &_obligation);
         ScopedSet solutionGuard(m_solution, std::optional<int64_t>{});
+        {
+            ScopedSet scope(m_setting_obligation, true);
+            _obligation.acceptIR(*this);
+        }
         _locality.accept(*this);
         aggregate();
         return m_solution;
@@ -189,17 +192,51 @@ public:
     }
 
 protected:
-    T const& activeObligation() const override
-    {
-        return (*m_active_obligation);
-    }
+    // Statement obligatons.
+    virtual void setObligation(TreeBlockSummary const&) {}
+    virtual void setObligation(LoopSummary const& _ir) {}
+    virtual void setObligation(NumericExprStatement const&) {}
+    virtual void setObligation(BooleanExprStatement const&) {}
+    virtual void setObligation(FreshVarSummary const&) {}
+
+    // Function obligations.
+    // ...
+
+    // Contract obligations.
+    // ...
 
 private:
     // Hides the solution raw data from concrete implementations.
     using ProgramPattern::m_solution;
 
-    // The active structural obgliation.
-    T const* m_active_obligation{nullptr};
+    // True if the obligation is being set.
+    bool m_setting_obligation{false};
+
+    /**
+     * TODO
+     */
+    template <class T>
+    void dispatchIR(T const& _ir)
+    {
+        if (m_setting_obligation)
+        {
+            clearObligation();
+            setObligation(_ir);
+        }
+    }
+
+    void acceptIR(TreeBlockSummary const& _ir) { dispatchIR(_ir); }
+    void acceptIR(LoopSummary const& _ir) { dispatchIR(_ir); }
+    void acceptIR(NumericExprStatement const& _ir) { dispatchIR(_ir); }
+    void acceptIR(BooleanExprStatement const& _ir) { dispatchIR(_ir); }
+    void acceptIR(FreshVarSummary const& _ir) { dispatchIR(_ir); }
+
+    void acceptIR(NumericConstant const&) {}
+    void acceptIR(NumericVariable const&) {}
+    void acceptIR(BooleanConstant const&) {}
+    void acceptIR(BooleanVariable const&) {}
+    void acceptIR(Comparison const&) {}
+    void acceptIR(PushCall const&) {}
 };
 }
 
