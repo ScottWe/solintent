@@ -695,8 +695,9 @@ bool CommandLineInterface::actOnInput()
 		// TODO: remember contract...
 		auto statement = dynamic_cast<solidity::Statement const*>(suspect.node);
 		auto summary = engine.checkStatement(*statement);
+		auto locality = engine.checkContract(*suspect.contract);
 		auto solution = daafc_pattern->abductExplanation(
-			*summary, *suspect.contract
+			*summary, *locality
 		);
 
 		if (solution.has_value())

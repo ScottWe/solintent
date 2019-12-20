@@ -27,7 +27,7 @@
 #pragma once
 
 #include <libsolidity/ast/ASTVisitor.h>
-#include <libsolintent/ir/ExpressionInterface.h>
+#include <libsolintent/ir/StructuralSummary.h>
 #include <libsolintent/ir/IRVisitor.h>
 #include <libsolintent/static/AnalysisEngine.h>
 #include <libsolintent/util/Generic.h>
@@ -109,7 +109,7 @@ namespace detail
  * An interface used to abduct a proof for an associated assertion template.
  * This is a detail as it is not specialized to any given obligaiton.
  */
-class ProgramPattern: protected solidity::ASTConstVisitor
+class ProgramPattern: protected IRVisitor
 {
 public:
     /**
@@ -120,16 +120,13 @@ public:
      * _locality: the contract on which the obligation was generated
      */
     virtual std::optional<int64_t> abductExplanation(
-        ContractSummary const& _obligation,
-        solidity::ContractDefinition const& _locality
+        ContractSummary const& _obligation, ContractSummary const& _locality
     );
     virtual std::optional<int64_t> abductExplanation(
-        FunctionSummary const& _obligation,
-        solidity::ContractDefinition const& _locality
+        FunctionSummary const& _obligation, ContractSummary const& _locality
     );
     virtual std::optional<int64_t> abductExplanation(
-        StatementSummary const& _obligation,
-        solidity::ContractDefinition const& _locality
+        StatementSummary const& _obligation, ContractSummary const& _locality
     );
 
     virtual ~ProgramPattern() = 0;
@@ -158,9 +155,65 @@ protected:
      */
     virtual void clearObligation() = 0;
 
+    virtual void setObligation(ContractSummary const&);
+    virtual void setObligation(FunctionSummary const& _ir);
+    virtual void setObligation(TreeBlockSummary const&);
+    virtual void setObligation(LoopSummary const& _ir);
+    virtual void setObligation(NumericExprStatement const&);
+    virtual void setObligation(BooleanExprStatement const&);
+    virtual void setObligation(FreshVarSummary const&);
+
+    virtual void abductFrom(ContractSummary const&);
+    virtual void abductFrom(FunctionSummary const& _ir);
+    virtual void abductFrom(TreeBlockSummary const&);
+    virtual void abductFrom(LoopSummary const& _ir);
+    virtual void abductFrom(NumericExprStatement const&);
+    virtual void abductFrom(BooleanExprStatement const&);
+    virtual void abductFrom(FreshVarSummary const&);
+
+    /**
+     * Used to determine which implmentation of acceptIR the derived policy
+     * should apply. This depends on whether or not this is the obligation
+     * propogation stage.
+     * 
+     * _ir: the IR node to visit.
+     */
+    template <class T>
+    bool dispatchIR(T const& _ir)
+    {
+        if (m_setting_obligation)
+        {
+            clearObligation();
+            setObligation(_ir);
+            return false;
+        }
+        else
+        {
+            abductFrom(_ir);
+            return true;
+        }
+    }
+
+    void acceptIR(ContractSummary const& _ir);
+    void acceptIR(FunctionSummary const& _ir);
+    void acceptIR(TreeBlockSummary const& _ir);
+    void acceptIR(LoopSummary const& _ir);
+    void acceptIR(NumericExprStatement const& _ir);
+    void acceptIR(BooleanExprStatement const& _ir);
+    void acceptIR(FreshVarSummary const& _ir);
+
+    void acceptIR(NumericConstant const&);
+    void acceptIR(NumericVariable const&);
+    void acceptIR(BooleanConstant const&);
+    void acceptIR(BooleanVariable const&);
+    void acceptIR(Comparison const&);
+    void acceptIR(PushCall const&);
+
 public:
     // The aducted solution.
     std::optional<int64_t> m_solution{std::nullopt};
+    // True if the obligation is being set.
+    bool m_setting_obligation{false};
 };
 
 /**
@@ -169,12 +222,11 @@ public:
  * parameter type.
  */
 template <typename SummaryT>
-class SpecializedPattern: public ProgramPattern, private IRVisitor
+class SpecializedPattern: public ProgramPattern
 {
 public:
     std::optional<int64_t> abductExplanation(
-        SummaryT const& _obligation,
-        solidity::ContractDefinition const& _locality
+        SummaryT const& _obligation, ContractSummary const& _locality
     ) override
     {
         ScopedSet solutionGuard(m_solution, std::optional<int64_t>{});
@@ -182,7 +234,10 @@ public:
             ScopedSet scope(m_setting_obligation, true);
             _obligation.acceptIR(*this);
         }
-        _locality.accept(*this);
+        {
+            ScopedSet scope(m_setting_obligation, false);
+            _locality.acceptIR(*this);
+        }
         aggregate();
         return m_solution;
     }
@@ -191,50 +246,9 @@ public:
     {
     }
 
-protected:
-    virtual void setObligation(ContractSummary const&) {}
-    virtual void setObligation(FunctionSummary const&) {}
-    virtual void setObligation(TreeBlockSummary const&) {}
-    virtual void setObligation(LoopSummary const& _ir) {}
-    virtual void setObligation(NumericExprStatement const&) {}
-    virtual void setObligation(BooleanExprStatement const&) {}
-    virtual void setObligation(FreshVarSummary const&) {}
-
 private:
     // Hides the solution raw data from concrete implementations.
     using ProgramPattern::m_solution;
-
-    // True if the obligation is being set.
-    bool m_setting_obligation{false};
-
-    /**
-     * TODO
-     */
-    template <class T>
-    void dispatchIR(T const& _ir)
-    {
-        if (m_setting_obligation)
-        {
-            clearObligation();
-            setObligation(_ir);
-        }
-    }
-
-    void acceptIR(ContractSummary const& _ir) { dispatchIR(_ir); }
-    void acceptIR(FunctionSummary const& _ir) { dispatchIR(_ir); }
-
-    void acceptIR(TreeBlockSummary const& _ir) { dispatchIR(_ir); }
-    void acceptIR(LoopSummary const& _ir) { dispatchIR(_ir); }
-    void acceptIR(NumericExprStatement const& _ir) { dispatchIR(_ir); }
-    void acceptIR(BooleanExprStatement const& _ir) { dispatchIR(_ir); }
-    void acceptIR(FreshVarSummary const& _ir) { dispatchIR(_ir); }
-
-    void acceptIR(NumericConstant const&) {}
-    void acceptIR(NumericVariable const&) {}
-    void acceptIR(BooleanConstant const&) {}
-    void acceptIR(BooleanVariable const&) {}
-    void acceptIR(Comparison const&) {}
-    void acceptIR(PushCall const&) {}
 };
 }
 

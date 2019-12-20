@@ -1,6 +1,8 @@
 /**
- * The file defines the "DynamicArraysAsFixed Containers" pattern.
- * TODO
+ * The file defines the "DynamicArraysAsFixed Containers" pattern. This pattern
+ * is based on the fact that some Solidity programs make use of vectors (dynamic
+ * arrays) as fixed-length arrays. This heuristic will aggregate the number of
+ * pushes to an array as an estimate of its bounds.
  */
 
 /**
@@ -18,9 +20,6 @@ namespace dev
 namespace solintent
 {
 
-/**
- * TODO
- */
 class DynamicArraysAsFixedContainers: public StatementPattern
 {
 public:
@@ -29,16 +28,17 @@ public:
     void aggregate() override;
 
 protected:
-    // Counts the number of push calls.
-    int64_t m_count = 0;
-    // A reference to the current obligation.
-    LoopSummary const* m_obligation;
-
     void clearObligation() override;
 
     void setObligation(LoopSummary const& _ir) override;
 
-    bool visit(solidity::FunctionCall const& _node) override;
+    void abductFrom(NumericExprStatement const& _ir) override;
+
+private:
+    // Counts the number of push calls.
+    int64_t m_count = 0;
+    // A reference to the current obligation.
+    LoopSummary const* m_obligation;
 };
 
 }

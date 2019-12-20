@@ -26,6 +26,10 @@
 
 #include <libsolintent/static/ImplicitObligation.h>
 
+#include <libsolintent/ir/ExpressionInterface.h>
+#include <libsolintent/ir/StatementSummary.h>
+#include <libsolintent/ir/StructuralSummary.h>
+
 #include <libsolintent/util/Generic.h>
 #include <stdexcept>
 
@@ -118,24 +122,21 @@ detail::ProgramPattern::~ProgramPattern()
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    ContractSummary const& _obligation,
-    solidity::ContractDefinition const& _locality
+    ContractSummary const& _obligation, ContractSummary const& _locality
 )
 {
     throw runtime_error("The Pattern must be specialized for Contracts");
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    FunctionSummary const& _obligation,
-    solidity::ContractDefinition const& _locality
+    FunctionSummary const& _obligation, ContractSummary const& _locality
 )
 {
     throw runtime_error("The Pattern must be specialized for Functions.");
 }
 
 optional<int64_t> detail::ProgramPattern::abductExplanation(
-    StatementSummary const& _obligation,
-    solidity::ContractDefinition const& _locality
+    StatementSummary const& _obligation, ContractSummary const& _locality
 )
 {
     throw runtime_error("The Pattern must be specialized for Statements.");
@@ -156,6 +157,140 @@ void detail::ProgramPattern::setSolution(int64_t _sol)
 }
 
 void detail::ProgramPattern::aggregate()
+{
+}
+
+void detail::ProgramPattern::setObligation(ContractSummary const&)
+{
+}
+
+void detail::ProgramPattern::setObligation(FunctionSummary const& _ir)
+{
+}
+
+void detail::ProgramPattern::setObligation(TreeBlockSummary const&)
+{
+}
+
+void detail::ProgramPattern::setObligation(LoopSummary const& _ir)
+{
+}
+
+void detail::ProgramPattern::setObligation(NumericExprStatement const&)
+{
+}
+
+void detail::ProgramPattern::setObligation(BooleanExprStatement const&)
+{
+}
+
+void detail::ProgramPattern::setObligation(FreshVarSummary const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(ContractSummary const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(FunctionSummary const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(TreeBlockSummary const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(LoopSummary const& )
+{
+}
+
+void detail::ProgramPattern::abductFrom(NumericExprStatement const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(BooleanExprStatement const&)
+{
+}
+
+void detail::ProgramPattern::abductFrom(FreshVarSummary const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(ContractSummary const& _ir)
+{
+    if (dispatchIR(_ir))
+    {
+        for (size_t i = 0; i < _ir.summaryLength(); ++i)
+        {
+            // TODO: wait, why did I make this a ref? (see below)
+            _ir.get(i).acceptIR(*this);
+        }
+    }
+}
+
+void detail::ProgramPattern::acceptIR(FunctionSummary const& _ir)
+{
+    if (dispatchIR(_ir))
+    {
+        _ir.body().acceptIR(*this);
+    }
+}
+
+void detail::ProgramPattern::acceptIR(TreeBlockSummary const& _ir)
+{
+    if (dispatchIR(_ir))
+    {
+        for (size_t i = 0; i < _ir.summaryLength(); ++i)
+        {
+            _ir.get(i)->acceptIR(*this);
+        }
+    }
+}
+
+void detail::ProgramPattern::acceptIR(LoopSummary const& _ir)
+{
+    if (dispatchIR(_ir))
+    {
+        _ir.body().acceptIR(*this);
+    }
+}
+
+void detail::ProgramPattern::acceptIR(NumericExprStatement const& _ir)
+{
+    dispatchIR(_ir);
+}
+
+void detail::ProgramPattern::acceptIR(BooleanExprStatement const& _ir)
+{
+    dispatchIR(_ir);
+}
+
+void detail::ProgramPattern::acceptIR(FreshVarSummary const& _ir)
+{
+    dispatchIR(_ir);
+}
+
+void detail::ProgramPattern::acceptIR(NumericConstant const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(NumericVariable const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(BooleanConstant const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(BooleanVariable const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(Comparison const&)
+{
+}
+
+void detail::ProgramPattern::acceptIR(PushCall const&)
 {
 }
 
